@@ -3,56 +3,118 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistema de Electromantenimiento | UNIPAZ - Ecopetrol</title>
-
-  <!-- Leaflet CSS (Mapa) -->
+  <title>Sistema de Electromantenimiento - UNIPAZ / ECOPETROL</title>
+  
+  <!-- Leaflet CSS (Mapas) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
+  <!-- Supabase JS Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
     :root {
-      --color-ecopetrol: #004d40;
-      --color-unipaz: #002b49;
-      --color-electrico: #00e676;
-      --color-alerta: #dc3545;
-      --color-fondo: #f4f7f6;
+      --primary-color: #004d40;
+      --secondary-color: #002b49;
+      --accent-color: #0288d1;
+      --bg-light: #f4f7f6;
+      --text-color: #333333;
+      --white: #ffffff;
+      --danger: #d32f2f;
     }
 
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: var(--color-fondo);
       margin: 0;
       padding: 0;
-      color: #333;
+      background-color: var(--bg-light);
+      color: var(--text-color);
+    }
+
+    header {
+      background-color: var(--primary-color);
+      color: var(--white);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    .header-logo-container {
+      background-color: #ffffff;
+      padding: 6px 12px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+      height: 65px;
+    }
+
+    .header-logo {
+      height: 42px;
+      width: auto;
+      max-width: 150px;
+      object-fit: contain;
+      display: block;
+    }
+
+    .logo-unipaz {
+      height: 60px;
+      max-width: 200px;
+    }
+
+    .header-title {
+      text-align: center;
+      flex-grow: 1;
+      padding: 0 15px;
+    }
+
+    .header-title h1 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .header-title p {
+      margin: 4px 0 0;
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
+    .tabs-nav {
+      display: flex;
+      justify-content: center;
+      background: var(--secondary-color);
+      padding: 5px 0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .tab-btn {
+      background: transparent;
+      color: rgba(255, 255, 255, 0.8);
+      border: none;
+      padding: 12px 20px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-bottom: 3px solid transparent;
+    }
+
+    .tab-btn:hover {
+      color: var(--white);
+    }
+
+    .tab-btn.active {
+      color: var(--white);
+      border-bottom: 3px solid #80cbc4;
+      background: rgba(255, 255, 255, 0.1);
     }
 
     .container {
       max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 20px 40px 20px;
-    }
-
-    /* Navegación por Pestañas */
-    .tabs-nav {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
-      border-bottom: 2px solid #ccc;
-    }
-
-    .tab-btn {
-      padding: 12px 24px;
-      background: #e0e0e0;
-      border: none;
-      border-radius: 8px 8px 0 0;
-      font-weight: bold;
-      cursor: pointer;
-      color: #555;
-      transition: all 0.2s ease;
-    }
-
-    .tab-btn.active {
-      background: var(--color-ecopetrol);
-      color: white;
+      margin: 20px auto;
+      padding: 0 15px;
     }
 
     .tab-content {
@@ -63,324 +125,413 @@
       display: block;
     }
 
-    /* Contenedor del Mapa */
     #mapaEstaciones {
-      height: 500px;
+      height: 550px;
       width: 100%;
-      min-height: 500px;
       border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
       border: 1px solid #ccc;
-      background-color: #e5e3df;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      margin-bottom: 20px;
     }
 
-    /* Formulario */
-    form {
-      background: white;
-      padding: 25px;
+    .card {
+      background: var(--white);
       border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-      margin-bottom: 30px;
-      border-top: 4px solid var(--color-ecopetrol);
+      padding: 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      margin-bottom: 20px;
     }
 
     .form-group {
       margin-bottom: 15px;
     }
 
-    label {
+    .form-group label {
       display: block;
-      font-weight: 600;
+      font-size: 13px;
+      font-weight: bold;
       margin-bottom: 5px;
-      color: #2c3e50;
     }
 
-    input, select {
+    .form-group input, 
+    .form-group select {
       width: 100%;
-      padding: 10px;
+      padding: 9px;
       border: 1px solid #ccc;
-      border-radius: 5px;
+      border-radius: 4px;
       box-sizing: border-box;
       font-size: 14px;
     }
 
-    /* Botones */
-    button {
-      padding: 10px 18px;
-      background-color: var(--color-ecopetrol);
-      color: white;
+    .btn-submit {
+      background: var(--primary-color);
+      color: var(--white);
       border: none;
-      border-radius: 5px;
+      padding: 10px 20px;
+      border-radius: 4px;
       font-weight: bold;
       cursor: pointer;
-      transition: background-color 0.2s ease;
     }
 
-    button:hover {
-      background-color: #00332c;
+    .btn-cancel {
+      background: #757575;
+      color: var(--white);
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: none;
     }
 
-    button.btn-eliminar {
-      background-color: var(--color-alerta);
-    }
-
-    button.btn-cancelar {
-      background-color: #6c757d;
-      margin-left: 10px;
-    }
-
-    /* Tablas */
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-    }
-
-    th, td {
-      padding: 12px 15px;
-      text-align: left;
-      border-bottom: 1px solid #ddd;
-    }
-
-    th {
-      background-color: var(--color-ecopetrol);
-      color: white;
-      font-weight: 600;
-      text-transform: uppercase;
-      font-size: 13px;
-    }
-
-    /* Tarjetas de Técnicos */
-    .tecnicos-grid {
+    .grid-tecnicos {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
       gap: 20px;
     }
 
-    .tecnico-card {
-      background: white;
+    .card-tecnico {
+      background: #fff;
+      border: 1px solid #e0e0e0;
       border-radius: 8px;
-      padding: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 15px;
       text-align: center;
-      border-top: 4px solid var(--color-unipaz);
+      position: relative;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
 
-    .tecnico-card img {
-      width: 100px;
-      height: 100px;
+    .card-tecnico img {
+      width: 90px;
+      height: 90px;
       border-radius: 50%;
       object-fit: cover;
       margin-bottom: 10px;
-      border: 3px solid var(--color-ecopetrol);
+      border: 3px solid var(--primary-color);
     }
 
-    .badge-empresa {
-      display: inline-block;
-      padding: 4px 10px;
-      background: #e8f5e9;
-      color: #2e7d32;
-      border-radius: 12px;
-      font-size: 12px;
-      font-weight: bold;
-      margin-top: 5px;
+    .acciones-tecnico {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      gap: 5px;
     }
 
-    .horario-badge {
-      display: inline-block;
+    .btn-icon {
+      border: none;
+      background: #eee;
+      border-radius: 4px;
+      padding: 5px 8px;
+      cursor: pointer;
+    }
+
+    .table-responsive {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
       margin-top: 10px;
-      padding: 6px 12px;
-      background: #e3f2fd;
-      color: #1565c0;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 600;
+      background: var(--white);
+      font-size: 13px;
+    }
+
+    th, td {
+      border: 1px solid #e0e0e0;
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background-color: var(--primary-color);
+      color: var(--white);
+    }
+
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      overflow: auto;
+    }
+
+    .modal-content {
+      background: var(--white);
+      margin: 5% auto;
+      padding: 25px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 650px;
+      position: relative;
+    }
+
+    .close-modal {
+      position: absolute;
+      right: 15px;
+      top: 10px;
+      font-size: 24px;
+      cursor: pointer;
+      color: #777;
+    }
+
+    @media (max-width: 600px) {
+      header {
+        flex-direction: column;
+        gap: 10px;
+      }
+      .header-logo-container {
+        height: auto;
+      }
     }
   </style>
-
-  <!-- Leaflet JS & Supabase SDK -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
-  <!-- Encabezado Institucional: UNIPAZ & Ecopetrol -->
-  <header style="background: linear-gradient(135deg, #003322 0%, #001f3f 100%); padding: 15px 30px; display: flex; align-items: center; justify-content: space-between; border-bottom: 4px solid #FFD700; box-shadow: 0 4px 10px rgba(0,0,0,0.15); margin-bottom: 25px;">
+  <!-- Encabezado con Logos -->
+  <header>
+    <div class="header-logo-container">
+      <img src="logo-unipaz.png" alt="Logo UNIPAZ" class="header-logo logo-unipaz">
+    </div>
     
-    <!-- Logo UNIPAZ -->
-    <div style="display: flex; align-items: center; gap: 15px;">
-      <img src="logo-unipaz.png.png" alt="Logo UNIPAZ" style="height: 65px; background: white; padding: 4px; border-radius: 50%; border: 2px solid #003322;" onerror="this.src='logo-unipaz.png'">
-      <div style="color: white;">
-        <h4 style="margin: 0; font-size: 14px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: #a3e635;">Instituto Universitario de la Paz</h4>
-        <p style="margin: 2px 0 0 0; font-size: 11px; opacity: 0.85;">Escuela de Ingeniería Electromecánica y Mantenimiento</p>
-      </div>
+    <div class="header-title">
+      <h1>⚡ Sistema de Electromantenimiento</h1>
+      <p>Gestión de Estaciones de Recolección y Personal Técnico | UNIPAZ - ECOPETROL</p>
     </div>
 
-    <!-- Título Central -->
-    <div style="text-align: center; color: white;">
-      <h1 style="margin: 0; font-size: 20px; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 1px;">Sistema de Electromantenimiento</h1>
-      <p style="margin: 3px 0 0 0; font-size: 12px; color: #FFD700; font-weight: 500;">Gestión Inteligente de Estaciones Operativas</p>
+    <div class="header-logo-container">
+      <img src="logo-ecopetrol.png" alt="Logo Ecopetrol" class="header-logo">
     </div>
-
-    <!-- Logo Ecopetrol -->
-    <div style="display: flex; align-items: center; gap: 15px;">
-      <div style="color: white; text-align: right;">
-        <h4 style="margin: 0; font-size: 14px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: #00e676;">Proyecto de Aplicación</h4>
-        <p style="margin: 2px 0 0 0; font-size: 11px; opacity: 0.85;">Sector Hidrocarburos - Ecopetrol S.A.</p>
-      </div>
-      <img src="logo-ecopetrol.png.png" alt="Logo Ecopetrol" style="height: 60px; background: white; padding: 5px; border-radius: 8px;" onerror="this.src='logo-ecopetrol.png'">
-    </div>
-
   </header>
 
-  <div class="container">
+  <!-- Navegación por pestañas -->
+  <nav class="tabs-nav">
+    <button class="tab-btn active" onclick="cambiarPestana('mapa')">🗺️ Mapa de Estaciones</button>
+    <button class="tab-btn" onclick="cambiarPestana('tecnicos')">👨‍🔧 Directorio Técnico</button>
+    <button class="tab-btn" onclick="cambiarPestana('agendamiento')">📅 Agendamiento de Mantenimientos</button>
+  </nav>
 
-    <!-- Menú por Pestañas -->
-    <div class="tabs-nav">
-      <button class="tab-btn active" onclick="cambiarPestana('mapa')">📍 Mapa de Estaciones</button>
-      <button class="tab-btn" onclick="cambiarPestana('agendamiento')">📋 Agendamiento y Registro</button>
-      <button class="tab-btn" onclick="cambiarPestana('tecnicos')">👷 Directorio de Técnicos</button>
+  <main class="container">
+
+    <!-- PESTAÑA 1: MAPA DE ESTACIONES -->
+    <section id="tab-mapa" class="tab-content active">
+      <div class="card">
+        <h2 style="margin-top:0; color:var(--primary-color);">Estaciones de Recolección y Plantas (Barrancabermeja y Alrededores)</h2>
+        <p style="font-size: 13px; color: #666;">Haz clic en cualquiera de los marcadores para ver los detalles del centro operacional o agendar un mantenimiento.</p>
+        <div id="mapaEstaciones"></div>
+      </div>
+    </section>
+
+    <!-- PESTAÑA 2: DIRECTORIO TÉCNICO -->
+    <section id="tab-tecnicos" class="tab-content">
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+          <h2 style="margin:0; color:var(--primary-color);">Directorio de Personal Técnico</h2>
+          <button onclick="abrirModalFormTecnico()" style="background: var(--primary-color); color: white; border: none; padding: 10px 18px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px;">
+            ➕ Agregar Nuevo Técnico
+          </button>
+        </div>
+        <div id="gridTecnicos" class="grid-tecnicos">
+          <!-- Carga dinámica mediante JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- PESTAÑA 3: AGENDAMIENTO -->
+    <section id="tab-agendamiento" class="tab-content">
+      <div class="card">
+        <h2 id="tituloFormulario" style="margin-top:0; color:var(--primary-color);">Programar Nuevo Mantenimiento</h2>
+        
+        <form id="formularioMantenimiento" onsubmit="guardarMantenimiento(event)">
+          <input type="hidden" id="mantenimientoId">
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px;">
+            
+            <div class="form-group">
+              <label for="equipo">Estación / Equipo / Activo:</label>
+              <select id="equipo" required>
+                <!-- Se llena dinámicamente con las estaciones de Barrancabermeja -->
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="tipo">Tipo de Mantenimiento:</label>
+              <select id="tipo" required>
+                <option value="">-- Seleccionar --</option>
+                <option value="Preventivo">Preventivo</option>
+                <option value="Correctivo">Correctivo</option>
+                <option value="Predictivo">Predictivo</option>
+                <option value="Inspección">Inspección Técnica</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="jornada">Jornada:</label>
+              <select id="jornada" required>
+                <option value="Mañana">Mañana</option>
+                <option value="Tarde">Tarde</option>
+                <option value="Noche">Noche</option>
+                <option value="Completa">Día Completo</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="fecha">Fecha Programada:</label>
+              <input type="date" id="fecha" required>
+            </div>
+
+            <div class="form-group">
+              <label for="hora">Hora Estimada:</label>
+              <input type="time" id="hora" required>
+            </div>
+
+            <div class="form-group">
+              <label for="tecnico">Técnico Asignado:</label>
+              <select id="tecnico" required>
+                <option value="">-- Cargando lista de técnicos... --</option>
+              </select>
+            </div>
+
+          </div>
+
+          <div style="margin-top: 15px; text-align: right; gap: 10px; display: flex; justify-content: flex-end;">
+            <button type="button" id="btnCancelar" class="btn-cancel" onclick="cancelarEdicionMantenimiento()">Cancelar</button>
+            <button type="submit" id="btnGuardar" class="btn-submit">Guardar Mantenimiento</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Tabla de Mantenimientos Agendados -->
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+          <h2 style="margin:0; color:var(--primary-color);">Mantenimientos Agendados</h2>
+          
+          <div>
+            <label style="font-size:12px; font-weight:bold; margin-right:5px;">Filtrar Tipo:</label>
+            <select id="filtroTipo" onchange="renderizarMantenimientos()" style="padding:5px; border-radius:4px; border:1px solid #ccc; font-size:12px;">
+              <option value="TODOS">Todos</option>
+              <option value="Preventivo">Preventivo</option>
+              <option value="Correctivo">Correctivo</option>
+              <option value="Predictivo">Predictivo</option>
+              <option value="Inspección">Inspección Técnica</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Equipo / Ubicación</th>
+                <th>Tipo</th>
+                <th>Jornada</th>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Técnico</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tablaMantenimientos">
+              <!-- Se llena con JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL: VER HORARIO TÉCNICO -->
+  <div id="modalTecnico" class="modal">
+    <div class="modal-content">
+      <span class="close-modal" onclick="cerrarModalTecnico()">&times;</span>
+      <div id="modalHeader" style="display:flex; gap:15px; align-items:center; margin-bottom:15px;"></div>
+      <div id="modalHorarioContent" class="table-responsive"></div>
     </div>
+  </div>
 
-    <!-- Pestaña 1: Mapa Interactivo -->
-    <div id="tab-mapa" class="tab-content active">
-      <h2>Ubicación de Estaciones Operativas (Tiempo Real)</h2>
-      <p>Selecciona una estación marcadora roja para visualizar sus detalles o programar mantenimientos directamente.</p>
-      <div id="mapaEstaciones"></div>
-    </div>
-
-    <!-- Pestaña 2: Agendamiento y Mantenimientos -->
-    <div id="tab-agendamiento" class="tab-content">
-      <form id="formularioMantenimiento">
-        <h2 id="tituloFormulario">Programar Nuevo Mantenimiento</h2>
-        <input type="hidden" id="mantenimientoId">
+  <!-- MODAL: AGREGAR / EDITAR TÉCNICO -->
+  <div id="modalFormTecnico" class="modal">
+    <div class="modal-content" style="max-width:500px;">
+      <span class="close-modal" onclick="cerrarModalFormTecnico()">&times;</span>
+      <h3 id="tituloModalTecnico" style="margin-top:0; color:var(--primary-color);">Agregar Nuevo Técnico</h3>
+      
+      <form id="formTecnico" onsubmit="guardarTecnico(event)">
+        <input type="hidden" id="tecIndex">
 
         <div class="form-group">
-          <label for="equipo">Equipo / Activo:</label>
-          <select id="equipo" required>
-            <option value="">-- Seleccione un equipo --</option>
-            <option value="Transformador Principal T-01">Transformador Principal T-01</option>
-            <option value="Bomba Electrosumergible B-04">Bomba Electrosumergible B-04</option>
-            <option value="Generador Diésel G-02">Generador Diésel G-02</option>
-            <option value="Compresor de Gas C-10">Compresor de Gas C-10</option>
-            <option value="Tablero de Control Eléctrico TC-03">Tablero de Control Eléctrico TC-03</option>
+          <label>Nombre Completo:</label>
+          <input type="text" id="tecNombre" required placeholder="Ej: Ing. Pedro Ramírez">
+        </div>
+
+        <div class="form-group">
+          <label>Especialidad:</label>
+          <input type="text" id="tecEspecialidad" required placeholder="Ej: Control Automático y PLC">
+        </div>
+
+        <div style="display:flex; gap:10px;">
+          <div class="form-group" style="flex:1;">
+            <label>Edad:</label>
+            <input type="number" id="tecEdad" required placeholder="32">
+          </div>
+          <div class="form-group" style="flex:2;">
+            <label>Empresa Aliada:</label>
+            <input type="text" id="tecEmpresa" required placeholder="Ej: Ecopetrol - Operaciones">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Jornada Habitual:</label>
+          <select id="tecJornada" required>
+            <option value="Diurna (07:00 - 16:00)">Diurna (07:00 - 16:00)</option>
+            <option value="Mañana (06:00 AM - 02:00 PM)">Mañana (06:00 AM - 02:00 PM)</option>
+            <option value="Tarde (02:00 PM - 10:00 PM)">Tarde (02:00 PM - 10:00 PM)</option>
+            <option value="Turno Rotativo (24/7)">Turno Rotativo (24/7)</option>
+            <option value="Nocturna / Guardia">Nocturna / Guardia</option>
           </select>
         </div>
 
-        <div class="form-group">
-          <label for="tipo">Tipo de Mantenimiento:</label>
-          <select id="tipo" required>
-            <option value="">-- Seleccione el tipo --</option>
-            <option value="Preventivo">Preventivo</option>
-            <option value="Correctivo">Correctivo</option>
-            <option value="Predictivo">Predictivo</option>
-          </select>
+        <!-- SECCIÓN DE SUBIDA Y ELIMINACIÓN DE FOTO -->
+        <div style="margin-bottom:15px; background:#f9f9f9; padding:12px; border-radius:6px; border:1px solid #eee;">
+          <label style="display:block; font-size:12px; font-weight:bold; margin-bottom:8px;">Foto de Perfil del Técnico:</label>
+
+          <input type="hidden" id="tecFoto">
+
+          <div style="display:flex; flex-direction:column; align-items:center; gap:10px;">
+            <img id="previewFotoTecnico" src="" alt="Vista previa" style="width:85px; height:85px; border-radius:50%; object-fit:cover; display:none; border:2px solid var(--primary-color); box-shadow:0 2px 5px rgba(0,0,0,0.2);">
+            
+            <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+              <label for="archivoFoto" style="background:var(--primary-color); color:white; padding:7px 12px; border-radius:4px; font-size:12px; font-weight:bold; cursor:pointer; display:inline-flex; align-items:center; gap:5px;">
+                📷 Subir / Cambiar Foto
+              </label>
+              <input type="file" id="archivoFoto" accept="image/*" onchange="procesarFotoArchivo(event)" style="display:none;">
+
+              <button type="button" id="btnEliminarFoto" onclick="eliminarFotoTecnico()" style="display:none; background:var(--danger); color:white; border:none; padding:7px 12px; border-radius:4px; font-size:12px; font-weight:bold; cursor:pointer;">
+                🗑️️ Eliminar Foto
+              </button>
+            </div>
+          </div>
         </div>
 
-        <div class="form-group">
-          <label for="jornada">Jornada Horaria:</label>
-          <select id="jornada" required>
-            <option value="">-- Seleccione la jornada --</option>
-            <option value="Mañana (6:00 AM - 2:00 PM)">Mañana (6:00 AM - 2:00 PM)</option>
-            <option value="Tarde (2:00 PM - 10:00 PM)">Tarde (2:00 PM - 10:00 PM)</option>
-            <option value="Noche (10:00 PM - 6:00 AM)">Noche (10:00 PM - 6:00 AM)</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="fecha">Fecha:</label>
-          <input type="date" id="fecha" required>
-        </div>
-
-        <div class="form-group">
-          <label for="hora">Hora estimada de inicio:</label>
-          <input type="time" id="hora" required>
-        </div>
-
-        <div class="form-group">
-          <label for="tecnico">Técnico Asignado:</label>
-          <select id="tecnico" required>
-            <option value="">-- Seleccione un técnico del personal disponible --</option>
-          </select>
-        </div>
-
-        <div>
-          <button type="submit" id="btnGuardar">Guardar Mantenimiento</button>
-          <button type="button" id="btnCancelar" class="btn-cancelar" style="display:none;">Cancelar</button>
+        <div style="text-align:right; gap:10px; display:flex; justify-content:flex-end;">
+          <button type="button" onclick="cerrarModalFormTecnico()" class="btn-cancel" style="display:inline-block;">Cancelar</button>
+          <button type="submit" class="btn-submit">Guardar Técnico</button>
         </div>
       </form>
-
-      <!-- Filtros y Tabla -->
-      <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px; background: white; padding: 15px; border-radius: 8px;">
-        <label for="filtroTipo"><strong>Filtrar por Tipo:</strong></label>
-        <select id="filtroTipo" style="width: auto;">
-          <option value="TODOS">-- Todos los tipos --</option>
-          <option value="Preventivo">Preventivo</option>
-          <option value="Correctivo">Correctivo</option>
-          <option value="Predictivo">Predictivo</option>
-        </select>
-      </div>
-
-      <table>
-        <thead>
-          <tr>
-            <th>Equipo</th>
-            <th>Tipo</th>
-            <th>Jornada</th>
-            <th>Fecha</th>
-            <th>Hora</th>
-            <th>Técnico</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody id="tablaMantenimientos"></tbody>
-      </table>
-    </div>
-
-    <!-- Pestaña 3: Directorio de Técnicos -->
-    <div id="tab-tecnicos" class="tab-content">
-      <h2>Personal Técnico Especializado</h2>
-      <p>Directorio de especialistas aliados para operaciones de mantenimiento.</p>
-      <div id="gridTecnicos" class="tecnicos-grid">
-        <!-- Se llena desde app.js -->
-      </div>
-    </div>
-
-  </div>
-<!-- Modal de Horario Semanal y Agendamientos del Técnico -->
-  <div id="modalTecnico" class="modal" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%; background-color:rgba(0,0,0,0.6); overflow:auto;">
-    <div style="background-color:#ffffff; margin:3% auto; padding:25px; border-radius:12px; width:92%; max-width:900px; position:relative; box-shadow:0 8px 25px rgba(0,0,0,0.3); font-family: sans-serif;">
-      <span onclick="cerrarModalTecnico()" style="position:absolute; right:20px; top:15px; font-size:28px; font-weight:bold; cursor:pointer; color:#888;">&times;</span>
-      
-      <!-- Encabezado del Técnico -->
-      <div id="modalHeader" style="display:flex; align-items:center; gap:20px; border-bottom:2px solid #e0e0e0; padding-bottom:15px; margin-bottom:15px;">
-        <!-- Se llena desde app.js -->
-      </div>
-
-      <!-- Título y Leyenda -->
-      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; margin-bottom:15px; gap:10px;">
-        <h4 style="margin:0; color:#004d40; font-size:16px;">📅 Cuadro de Horarios y Disponibilidad Semanal</h4>
-        <div style="font-size:12px; color:#555;">
-          <span style="background:#e8f5e9; border:1px solid #c8e6c9; padding:3px 8px; border-radius:4px; margin-right:5px; color:#2e7d32; font-weight:bold;">🟢 Libre</span>
-          <span style="background:#ffebee; border:1px solid #ffcdd2; padding:3px 8px; border-radius:4px; color:#c62828; font-weight:bold;">🔴 Mantenimiento Pendiente</span>
-        </div>
-      </div>
-
-      <!-- Tabla de Horarios -->
-      <div id="modalHorarioContent" style="max-height:420px; overflow-x:auto; overflow-y:auto; border:1px solid #e0e0e0; border-radius:6px;">
-        <!-- Se dibuja la tabla con JS -->
-      </div>
-
-      <div style="text-align:right; margin-top:15px;">
-        <button onclick="cerrarModalTecnico()" style="background:#004d40; color:white; border:none; padding:8px 20px; border-radius:4px; cursor:pointer; font-weight:bold;">Cerrar Vista</button>
-      </div>
     </div>
   </div>
 
-  <script src="app.js?v=2"></script>
+  <!-- Leaflet JS (Mapas) -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  
+  <!-- Lógica Principal Javascript -->
+  <script src="app.js"></script>
+
 </body>
 </html>
