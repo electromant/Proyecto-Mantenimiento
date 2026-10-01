@@ -14,7 +14,11 @@ const estacionesBarrancabermeja = [
   { id: 12, nombre: "Estación San Silvestre", lat: 7.0911, lng: -73.8155, sector: "Ciénaga San Silvestre", estado: "Operativo", desc: "Captación de Agua Industrial" }
 ];
 
-// Estado global
+// Avatares base vectoriales por defecto en SVG
+const avatarMujer = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23004d40'/><circle cx='50' cy='35' r='18' fill='%23ffffff'/><path d='M20 85 C20 60, 80 60, 80 85 Z' fill='%23ffffff'/></svg>";
+const avatarHombre = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23002b49'/><circle cx='50' cy='35' r='18' fill='%23ffffff'/><path d='M20 85 C20 60, 80 60, 80 85 Z' fill='%23ffffff'/></svg>";
+
+// ESTADO GLOBAL CON LOS 4 TÉCNICOS PREDEFINIDOS
 let tecnicos = JSON.parse(localStorage.getItem('tecnicos_data')) || [
   {
     nombre: "Ing. Carlos Mendoza",
@@ -22,7 +26,7 @@ let tecnicos = JSON.parse(localStorage.getItem('tecnicos_data')) || [
     edad: 38,
     empresa: "Ecopetrol - Planta Central",
     jornada: "Diurna (07:00 - 16:00)",
-    foto: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150"
+    foto: avatarHombre
   },
   {
     nombre: "Ingrid Johana Gómez",
@@ -30,12 +34,29 @@ let tecnicos = JSON.parse(localStorage.getItem('tecnicos_data')) || [
     edad: 34,
     empresa: "Ecopetrol - Operaciones",
     jornada: "Mañana (06:00 AM - 02:00 PM)",
-    foto: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150"
+    foto: avatarMujer
+  },
+  {
+    nombre: "Ing. Fabio Yordith Blanco Maffiold",
+    especialidad: "Operador de Planta",
+    edad: 32,
+    empresa: "Ecopetrol",
+    jornada: "Mañana (06:00 AM - 02:00 PM)",
+    foto: avatarHombre
+  },
+  {
+    nombre: "Ing. Harold Santiago Abaunza Quecho",
+    especialidad: "Programador de PLC's",
+    edad: 28,
+    empresa: "Ecopetrol",
+    jornada: "Diurna (07:00 - 16:00)",
+    foto: avatarHombre
   }
 ];
 
 let mantenimientos = JSON.parse(localStorage.getItem('mantenimientos_data')) || [];
 let mapa = null;
+let marcadorUsuario = null;
 
 // Inicialización de la aplicación
 document.addEventListener('DOMContentLoaded', () => {
@@ -83,7 +104,7 @@ function inicializarMapa() {
     attribution: '© OpenStreetMap | Ecopetrol - UNIPAZ'
   }).addTo(mapa);
 
-  // Agregar un marcador por cada estación
+  // Agregar marcador por cada estación
   estacionesBarrancabermeja.forEach(e => {
     const popupContent = `
       <div style="font-family: sans-serif; min-width:180px;">
@@ -105,9 +126,44 @@ function inicializarMapa() {
   }, 300);
 }
 
+// Función GPS / Ubicación del celular en tiempo real
+function obtenerUbicacionGPS() {
+  if (!navigator.geolocation) {
+    alert("Tu dispositivo o navegador no soporta la función de localización GPS.");
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    (posicion) => {
+      const lat = posicion.coords.latitude;
+      const lng = posicion.coords.longitude;
+
+      if (marcadorUsuario) {
+        mapa.removeLayer(marcadorUsuario);
+      }
+
+      mapa.setView([lat, lng], 15);
+
+      marcadorUsuario = L.circleMarker([lat, lng], {
+        color: '#0288d1',
+        fillColor: '#03a9f4',
+        fillOpacity: 0.9,
+        radius: 10
+      }).addTo(mapa)
+        .bindPopup("<b>📍 Tu Ubicación Actual (GPS)</b>")
+        .openPopup();
+    },
+    (error) => {
+      alert("No se pudo acceder a tu ubicación GPS. Asegúrate de activar el GPS del celular y dar permisos al navegador.");
+    },
+    { enableHighAccuracy: true }
+  );
+}
+
 // Llenar el select del formulario con las estaciones reales
 function cargarSelectEstaciones() {
   const select = document.getElementById('equipo');
+  if (!select) return;
   select.innerHTML = '<option value="">-- Seleccionar Estación / Equipo --</option>';
 
   estacionesBarrancabermeja.forEach(e => {
@@ -131,7 +187,7 @@ function agendarEstacionDirecto(nombreEstacion) {
   }
 }
 
-// Procesar y comprimir la foto del técnico usando Canvas
+// Procesar y comprimir la foto del técnico
 function procesarFotoArchivo(event) {
   const archivo = event.target.files[0];
   if (!archivo) return;
@@ -186,19 +242,23 @@ function eliminarFotoTecnico() {
   document.getElementById('archivoFoto').value = '';
 
   const imgPreview = document.getElementById('previewFotoTecnico');
-  imgPreview.src = '';
-  imgPreview.style.display = 'none';
+  if (imgPreview) {
+    imgPreview.src = '';
+    imgPreview.style.display = 'none';
+  }
 
-  document.getElementById('btnEliminarFoto').style.display = 'none';
+  const btnEliminar = document.getElementById('btnEliminarFoto');
+  if (btnEliminar) btnEliminar.style.display = 'none';
 }
 
-// Renderizado de técnicos
+// Renderizado de técnicos en pantalla
 function renderizarTecnicos() {
   const grid = document.getElementById('gridTecnicos');
+  if (!grid) return;
   grid.innerHTML = '';
 
   tecnicos.forEach((t, index) => {
-    const fotoUrl = t.foto || 'https://via.placeholder.com/100?text=Sin+Foto';
+    const fotoUrl = t.foto || avatarHombre;
     
     const card = document.createElement('div');
     card.className = 'card-tecnico';
@@ -225,6 +285,7 @@ function renderizarTecnicos() {
 
 function cargarSelectTecnicos() {
   const select = document.getElementById('tecnico');
+  if (!select) return;
   select.innerHTML = '<option value="">-- Seleccionar Técnico --</option>';
 
   tecnicos.forEach(t => {
@@ -258,7 +319,7 @@ function guardarTecnico(e) {
     edad: document.getElementById('tecEdad').value,
     empresa: document.getElementById('tecEmpresa').value,
     jornada: document.getElementById('tecJornada').value,
-    foto: document.getElementById('tecFoto').value
+    foto: document.getElementById('tecFoto').value || avatarHombre
   };
 
   if (index === '') {
@@ -334,6 +395,7 @@ function guardarMantenimiento(e) {
 
 function renderizarMantenimientos() {
   const tbody = document.getElementById('tablaMantenimientos');
+  if (!tbody) return;
   const filtro = document.getElementById('filtroTipo').value;
   tbody.innerHTML = '';
 
@@ -402,7 +464,7 @@ function verCuadroHorarios(index) {
   const modalContent = document.getElementById('modalHorarioContent');
 
   modalHeader.innerHTML = `
-    <img src="${t.foto || 'https://via.placeholder.com/80'}" style="width:60px; height:60px; border-radius:50%; object-fit:cover;">
+    <img src="${t.foto || avatarHombre}" style="width:60px; height:60px; border-radius:50%; object-fit:cover;">
     <div>
       <h3 style="margin:0; color:var(--primary-color);">${t.nombre}</h3>
       <p style="margin:2px 0; font-size:12px; color:#555;">${t.especialidad} - <b>${t.empresa}</b></p>
