@@ -21,7 +21,7 @@ const ESTACIONES = [
   { id: 6, nombre: "Estación Llanito", lat: 7.1230, lng: -73.7910, tipo: "Recolección" }
 ];
 
-// Técnicos con teléfono y correo configurados por defecto
+// Datos de respaldo por defecto
 const TECNICOS_DEFECTO = [
   {
     id: 1,
@@ -142,9 +142,8 @@ function obtenerUbicacionGPS() {
    2. FUNCIONES DE NOTIFICACIÓN DUAL (EMAIL + WHATSAPP)
    ========================================================================== */
 
-// A. Envío por Correo con EmailJS
 function enviarCorreoTecnico(emailTecnico, datos) {
-  if (typeof emailjs === 'undefined') return;
+  if (typeof emailjs === 'undefined' || !emailTecnico) return;
 
   const templateParams = {
     to_email: emailTecnico,
@@ -156,7 +155,6 @@ function enviarCorreoTecnico(emailTecnico, datos) {
     jornada: datos.jornada
   };
 
-  // Puedes configurar tus IDs de plantilla de EmailJS cuando los crees
   emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', templateParams)
     .then(() => {
       console.log('✅ Correo electrónico enviado exitosamente');
@@ -166,8 +164,8 @@ function enviarCorreoTecnico(emailTecnico, datos) {
     });
 }
 
-// B. Envío por WhatsApp
 function notificarTecnicoWhatsApp(telefonoTecnico, datos) {
+  if (!telefonoTecnico) return;
   const numeroLimpio = telefonoTecnico.replace(/[^0-9]/g, '');
 
   const mensaje = `Hola! ⚡ *NUEVO MANTENIMIENTO ASIGNADO* %0A%0A` +
@@ -198,7 +196,6 @@ async function guardarMantenimiento(e) {
     tecnico: document.getElementById("tecnico").value
   };
 
-  // Guardar en Supabase o LocalStorage
   if (supabaseClient) {
     await supabaseClient.from("mantenimientos").insert([nuevoMantenimiento]);
   } else {
@@ -207,17 +204,11 @@ async function guardarMantenimiento(e) {
     localStorage.setItem("mantenimientos_data", JSON.stringify(listaMantenimientos));
   }
 
-  // Buscar datos de contacto del técnico asignado
-  const tecAsignado = listaTecnicos.find(t => t.nombre === nuevoMantenimiento.tecnico);
+  const tecAsignado = listaTecnicos.find(t => (t.nombre || t.nombre_tecnico) === nuevoMantenimiento.tecnico);
 
-  // 1. Enviar Correo Electrónico
-  if (tecAsignado && tecAsignado.email) {
-    enviarCorreoTecnico(tecAsignado.email, nuevoMantenimiento);
-  }
-
-  // 2. Notificar mediante WhatsApp
-  if (tecAsignado && tecAsignado.telefono) {
-    notificarTecnicoWhatsApp(tecAsignado.telefono, nuevoMantenimiento);
+  if (tecAsignado) {
+    if (tecAsignado.email) enviarCorreoTecnico(tecAsignado.email, nuevoMantenimiento);
+    if (tecAsignado.telefono) notificarTecnicoWhatsApp(tecAsignado.telefono, nuevoMantenimiento);
   }
 
   document.getElementById("formularioMantenimiento").reset();
@@ -253,12 +244,12 @@ function renderizarMantenimientos() {
   filtrados.forEach((m) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td><b>${m.equipo}</b></td>
-      <td><span style="background:#e0f2fe; color:#0369a1; padding:3px 8px; border-radius:4px; font-weight:bold;">${m.tipo}</span></td>
-      <td>${m.jornada}</td>
-      <td>${m.fecha}</td>
-      <td>${m.hora}</td>
-      <td>${m.tecnico}</td>
+      <td><b>${m.equipo || 'N/A'}</b></td>
+      <td><span style="background:#e0f2fe; color:#0369a1; padding:3px 8px; border-radius:4px; font-weight:bold;">${m.tipo || 'General'}</span></td>
+      <td>${m.jornada || 'N/A'}</td>
+      <td>${m.fecha || ''}</td>
+      <td>${m.hora || ''}</td>
+      <td>${m.tecnico || 'Sin asignar'}</td>
       <td>
         <button class="btn-icon" onclick="eliminarMantenimiento(${m.id})" title="Eliminar"><i class="fa-solid fa-trash" style="color:#ef4444;"></i></button>
       </td>
@@ -302,7 +293,18 @@ function renderizarTecnicos(tecnicos) {
   if (!grid) return;
   grid.innerHTML = "";
 
+  const fotoDefault = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150";
+
   tecnicos.forEach((tec) => {
+    // Protección contra campos nulos o vacíos en Supabase
+    const nombre = tec.nombre || tec.nombre_tecnico || "Técnico sin Nombre";
+    const especialidad = tec.especialidad || "Electromantenimiento";
+    const edad = tec.edad ? `${tec.edad} años` : "N/A";
+    const empresa = tec.empresa || "Ecopetrol";
+    const telefono = tec.telefono || "Sin teléfono";
+    const email = tec.email || "Sin correo";
+    const foto = (tec.foto && tec.foto !== 'undefined') ? tec.foto : fotoDefault;
+
     const card = document.createElement("div");
     card.className = "card-tecnico";
     card.innerHTML = `
@@ -312,19 +314,20 @@ function renderizarTecnicos(tecnicos) {
       </div>
       <div>
         <div class="card-header-img">
-          <img src="${tec.foto || 'https://via.placeholder.com/150'}" alt="${tec.nombre}">
+          <img src="${foto}" alt="${nombre}" onerror="this.src='${fotoDefault}'">
           <span class="status-badge" title="Disponible"></span>
         </div>
-        <h3>${tec.nombre}</h3>
-        <p class="especialidad">${tec.especialidad}</p>
-        <p><i class="fa-solid fa-phone"></i> ${tec.telefono || 'Sin teléfono'}</p>
-        <p><i class="fa-solid fa-envelope"></i> ${tec.email || 'Sin correo'}</p>
+        <h3>${nombre}</h3>
+        <p class="especialidad">${especialidad}</p>
+        <p><i class="fa-solid fa-user"></i> Edad: ${edad}</p>
+        <p><i class="fa-solid fa-phone"></i> ${telefono}</p>
+        <p><i class="fa-solid fa-envelope"></i> ${email}</p>
         <div style="text-align:center;">
-          <span class="badge-empresa">${tec.empresa}</span>
+          <span class="badge-empresa">${empresa}</span>
         </div>
       </div>
-      <button class="btn-horarios" onclick="verHorarioTecnico('${tec.nombre}')">
-        <i class="fa-solid fa-calendar-days"></i> Ver Agenda
+      <button class="btn-horarios" onclick="verHorarioTecnico('${nombre}')">
+        <i class="fa-solid fa-calendar-days"></i> Ver Cuadro de Horarios
       </button>
     `;
     grid.appendChild(card);
@@ -349,7 +352,7 @@ async function guardarTecnico(event) {
     telefono: document.getElementById("tecTelefono").value,
     email: document.getElementById("tecEmail").value,
     especialidad: document.getElementById("tecEspecialidad").value,
-    edad: parseInt(document.getElementById("tecEdad").value),
+    edad: parseInt(document.getElementById("tecEdad").value) || 30,
     empresa: document.getElementById("tecEmpresa").value,
     jornada: document.getElementById("tecJornada").value,
     foto: document.getElementById("tecFoto").value || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150"
@@ -429,7 +432,10 @@ function poblarSelectores() {
   }
 
   if (selectTecnico) {
-    selectTecnico.innerHTML = listaTecnicos.map(t => `<option value="${t.nombre}">${t.nombre}</option>`).join("");
+    selectTecnico.innerHTML = listaTecnicos.map(t => {
+      const nom = t.nombre || t.nombre_tecnico || 'Técnico';
+      return `<option value="${nom}">${nom}</option>`;
+    }).join("");
   }
 }
 
@@ -449,14 +455,14 @@ function editarTecnico(id) {
   if (!tec) return;
 
   document.getElementById("tecIndex").value = tec.id;
-  document.getElementById("tecNombre").value = tec.nombre;
+  document.getElementById("tecNombre").value = tec.nombre || tec.nombre_tecnico || "";
   document.getElementById("tecTelefono").value = tec.telefono || "";
   document.getElementById("tecEmail").value = tec.email || "";
-  document.getElementById("tecEspecialidad").value = tec.especialidad;
-  document.getElementById("tecEdad").value = tec.edad;
-  document.getElementById("tecEmpresa").value = tec.empresa;
-  document.getElementById("tecJornada").value = tec.jornada;
-  document.getElementById("tecFoto").value = tec.foto;
+  document.getElementById("tecEspecialidad").value = tec.especialidad || "";
+  document.getElementById("tecEdad").value = tec.edad || "";
+  document.getElementById("tecEmpresa").value = tec.empresa || "";
+  document.getElementById("tecJornada").value = tec.jornada || "";
+  document.getElementById("tecFoto").value = tec.foto || "";
 
   document.getElementById("tituloModalTecnico").innerText = "Editar Técnico";
   document.getElementById("modalFormTecnico").style.display = "block";
