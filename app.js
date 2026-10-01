@@ -139,49 +139,7 @@ function obtenerUbicacionGPS() {
 }
 
 /* ==========================================================================
-   2. FUNCIONES DE NOTIFICACIÓN DUAL (EMAIL + WHATSAPP)
-   ========================================================================== */
-
-function enviarCorreoTecnico(emailTecnico, datos) {
-  if (typeof emailjs === 'undefined' || !emailTecnico) return;
-
-  const templateParams = {
-    to_email: emailTecnico,
-    tecnico_nombre: datos.tecnico,
-    equipo: datos.equipo,
-    tipo: datos.tipo,
-    fecha: datos.fecha,
-    hora: datos.hora,
-    jornada: datos.jornada
-  };
-
-  emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', templateParams)
-    .then(() => {
-      console.log('✅ Correo electrónico enviado exitosamente');
-    })
-    .catch((err) => {
-      console.error('❌ Error enviando correo:', err);
-    });
-}
-
-function notificarTecnicoWhatsApp(telefonoTecnico, datos) {
-  if (!telefonoTecnico) return;
-  const numeroLimpio = telefonoTecnico.replace(/[^0-9]/g, '');
-
-  const mensaje = `Hola! ⚡ *NUEVO MANTENIMIENTO ASIGNADO* %0A%0A` +
-    `*Equipo / Estación:* ${datos.equipo}%0A` +
-    `*Tipo:* ${datos.tipo}%0A` +
-    `*Fecha:* ${datos.fecha}%0A` +
-    `*Hora:* ${datos.hora}%0A` +
-    `*Jornada:* ${datos.jornada}%0A%0A` +
-    `Por favor confirma la recepción de este aviso.`;
-
-  const urlWhatsApp = `https://api.whatsapp.com/send?phone=${numeroLimpio}&text=${mensaje}`;
-  window.open(urlWhatsApp, '_blank');
-}
-
-/* ==========================================================================
-   3. GESTIÓN Y AGENDAMIENTO DE MANTENIMIENTOS
+   2. GESTIÓN Y AGENDAMIENTO DE MANTENIMIENTOS
    ========================================================================== */
 
 async function guardarMantenimiento(e) {
@@ -204,19 +162,12 @@ async function guardarMantenimiento(e) {
     localStorage.setItem("mantenimientos_data", JSON.stringify(listaMantenimientos));
   }
 
-  const tecAsignado = listaTecnicos.find(t => (t.nombre || t.nombre_tecnico) === nuevoMantenimiento.tecnico);
-
-  if (tecAsignado) {
-    if (tecAsignado.email) enviarCorreoTecnico(tecAsignado.email, nuevoMantenimiento);
-    if (tecAsignado.telefono) notificarTecnicoWhatsApp(tecAsignado.telefono, nuevoMantenimiento);
-  }
-
   document.getElementById("formularioMantenimiento").reset();
   cargarMantenimientos();
 
   Swal.fire({
     title: '¡Mantenimiento Agendado!',
-    text: 'Se han procesado las notificaciones por Correo Electrónico y WhatsApp.',
+    text: 'El mantenimiento ha sido registrado en el sistema.',
     icon: 'success',
     confirmColor: '#004d40'
   });
@@ -269,7 +220,7 @@ async function eliminarMantenimiento(id) {
 }
 
 /* ==========================================================================
-   4. DIRECTORIO Y GESTIÓN DE TÉCNICOS
+   3. DIRECTORIO Y GESTIÓN DE TÉCNICOS
    ========================================================================== */
 
 async function cargarTecnicos() {
@@ -296,7 +247,6 @@ function renderizarTecnicos(tecnicos) {
   const fotoDefault = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150";
 
   tecnicos.forEach((tec) => {
-    // Protección contra campos nulos o vacíos en Supabase
     const nombre = tec.nombre || tec.nombre_tecnico || "Técnico sin Nombre";
     const especialidad = tec.especialidad || "Electromantenimiento";
     const edad = tec.edad ? `${tec.edad} años` : "N/A";
@@ -405,7 +355,7 @@ function confirmarEliminarTecnico(id) {
 }
 
 /* ==========================================================================
-   5. NAVEGACIÓN Y AUXILIARES
+   4. NAVEGACIÓN Y AUXILIARES
    ========================================================================== */
 
 function cambiarPestana(nombreTab) {
