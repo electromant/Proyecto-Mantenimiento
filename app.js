@@ -1,510 +1,441 @@
-// LISTA COMPLETA DE ESTACIONES DE RECOLECCIÓN Y INFRAESTRUCTURA BARRANCABERMEJA
-const estacionesBarrancabermeja = [
-  { id: 1, nombre: "Refinería de Barrancabermeja (GRB)", lat: 7.0653, lng: -73.8547, sector: "Urbano / Industrial", estado: "Operativo", desc: "Complejo Industrial Principal de Refinación" },
-  { id: 2, nombre: "Estación Galán", lat: 7.0425, lng: -73.8511, sector: "Galán / Rio Magdalena", estado: "Operativo", desc: "Terminal de Transporte y Almacenamiento de Crudos" },
-  { id: 3, nombre: "Estación Campo El Centro - Batería 1", lat: 6.8722, lng: -73.7481, sector: "Corregimiento El Centro", estado: "Operativo", desc: "Estación Central de Recolección Cira Infantas" },
-  { id: 4, nombre: "Estación Batería 2 (La Cira)", lat: 6.8911, lng: -73.7315, sector: "El Centro", estado: "Operativo", desc: "Separación y Deshidratación de Crudo" },
-  { id: 5, nombre: "Estación Batería 3 (Infantas)", lat: 6.8488, lng: -73.7592, sector: "El Centro / Infantas", estado: "Mantenimiento", desc: "Estación de Inyección de Agua y Recolección" },
-  { id: 6, nombre: "Estación El Llanito", lat: 7.1523, lng: -73.8011, sector: "Corregimiento El Llanito", estado: "Operativo", desc: "Recolección de hidrocarburos Norte" },
-  { id: 7, nombre: "Estación Lisama", lat: 6.9458, lng: -73.6521, sector: "Ruta del Cacao / Lisama", estado: "Operativo", desc: "Estación de Bombeo y Compresión de Gas" },
-  { id: 8, nombre: "Estación Casabe", lat: 7.0811, lng: -73.8825, sector: "Margen Izquierda Río Magd.", estado: "Operativo", desc: "Campo Histórico Casabe - Recolección" },
-  { id: 9, nombre: "Estación Cantagallo", lat: 7.3751, lng: -73.9189, sector: "Cantagallo (Sur de Bolívar)", estado: "Operativo", desc: "Planta Deshidratadora de Crudo" },
-  { id: 10, nombre: "Estación Yariguíes / San Vicente", lat: 6.9812, lng: -73.7845, sector: "Sabaneta", estado: "Inspección", desc: "Línea de Transferencia de Gas Petroquímico" },
-  { id: 11, nombre: "Estación Termoyariguíes", lat: 7.0511, lng: -73.8210, sector: "Comuna 6", estado: "Operativo", desc: "Generación Eléctrica para el Complejo" },
-  { id: 12, nombre: "Estación San Silvestre", lat: 7.0911, lng: -73.8155, sector: "Ciénaga San Silvestre", estado: "Operativo", desc: "Captación de Agua Industrial" }
+/* ==========================================================================
+   CONFIGURACIÓN Y DATOS INICIALES
+   ========================================================================== */
+
+// ⚠️ REEMPLAZA ESTOS VALORES CON TUS CLAVES DE SUPABASE
+const SUPABASE_URL = "https://jseocskipyhkmzatdplx.supabase.co";
+const SUPABASE_KEY = "sb_publishable_DbyAT_qBKj3hDVuBk0zUoQ_sWVAxmXz";
+
+// Inicialización del cliente de Supabase (si existe la librería)
+let supabaseClient = null;
+if (typeof supabase !== 'undefined') {
+  supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+}
+
+// Estaciones de Operación por Defecto (Barrancabermeja / ECOPETROL)
+const ESTACIONES = [
+  { id: 1, nombre: "Estación Galán", lat: 7.0625, lng: -73.8521, tipo: "Recolección" },
+  { id: 2, nombre: "Estación Casabe", lat: 7.0210, lng: -73.8820, tipo: "Tratamiento" },
+  { id: 3, nombre: "Estación Cira Infantas", lat: 6.9430, lng: -73.7550, tipo: "Inyección" },
+  { id: 4, nombre: "Estación Lisama", lat: 7.0850, lng: -73.6820, tipo: "Compresión" },
+  { id: 5, nombre: "Estación San Silvestre", lat: 7.0512, lng: -73.8310, tipo: "Bombeo" },
+  { id: 6, nombre: "Estación Llanito", lat: 7.1230, lng: -73.7910, tipo: "Recolección" }
 ];
 
-// Avatares base vectoriales por defecto en SVG
-const avatarMujer = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23004d40'/><circle cx='50' cy='35' r='18' fill='%23ffffff'/><path d='M20 85 C20 60, 80 60, 80 85 Z' fill='%23ffffff'/></svg>";
-const avatarHombre = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23002b49'/><circle cx='50' cy='35' r='18' fill='%23ffffff'/><path d='M20 85 C20 60, 80 60, 80 85 Z' fill='%23ffffff'/></svg>";
-
-// ESTADO GLOBAL CON LOS 4 TÉCNICOS PREDEFINIDOS
-let tecnicos = JSON.parse(localStorage.getItem('tecnicos_data')) || [
+// Técnicos por defecto (si la base de datos está vacía)
+const TECNICOS_DEFECTO = [
   {
+    id: 1,
     nombre: "Ing. Carlos Mendoza",
     especialidad: "Mantenimiento de Transformadores y Motores AC",
     edad: 38,
     empresa: "Ecopetrol - Planta Central",
     jornada: "Diurna (07:00 - 16:00)",
-    foto: avatarHombre
+    foto: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150"
   },
   {
+    id: 2,
     nombre: "Ingrid Johana Gómez",
     especialidad: "Mantenimiento de Bombas Electrosumergibles",
     edad: 34,
     empresa: "Ecopetrol - Operaciones",
     jornada: "Mañana (06:00 AM - 02:00 PM)",
-    foto: avatarMujer
+    foto: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150"
   },
   {
+    id: 3,
     nombre: "Ing. Fabio Yordith Blanco Maffiold",
     especialidad: "Operador de Planta",
     edad: 32,
     empresa: "Ecopetrol",
     jornada: "Mañana (06:00 AM - 02:00 PM)",
-    foto: avatarHombre
+    foto: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150"
   },
   {
+    id: 4,
     nombre: "Ing. Harold Santiago Abaunza Quecho",
     especialidad: "Programador de PLC's",
     edad: 28,
     empresa: "Ecopetrol",
     jornada: "Diurna (07:00 - 16:00)",
-    foto: avatarHombre
+    foto: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150"
   }
 ];
 
-let mantenimientos = JSON.parse(localStorage.getItem('mantenimientos_data')) || [];
-let mapa = null;
-let marcadorUsuario = null;
+let mapaInstance = null;
+let listaTecnicos = [];
+let listaMantenimientos = [];
 
-// Inicialización de la aplicación
-document.addEventListener('DOMContentLoaded', () => {
+/* ==========================================================================
+   INICIALIZACIÓN AL CARGAR LA PÁGINA
+   ========================================================================== */
+
+document.addEventListener("DOMContentLoaded", () => {
   inicializarMapa();
-  cargarSelectEstaciones();
-  renderizarTecnicos();
-  cargarSelectTecnicos();
-  renderizarMantenimientos();
+  cargarTecnicos();
+  cargarMantenimientos();
+  poblarSelectores();
+  suscripcionTiempoReal();
 });
 
-function guardarEstadoLocal() {
-  localStorage.setItem('tecnicos_data', JSON.stringify(tecnicos));
-  localStorage.setItem('mantenimientos_data', JSON.stringify(mantenimientos));
-}
+/* ==========================================================================
+   1. MAPA Y GEOLOCALIZACIÓN GPS (LEAFLET)
+   ========================================================================== */
 
-// Navegación de pestañas con ajuste de mapa
-function cambiarPestana(pestanaNombre) {
-  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-
-  if (window.event && window.event.currentTarget) {
-    window.event.currentTarget.classList.add('active');
-  }
-  
-  const targetTab = document.getElementById(`tab-${pestanaNombre}`);
-  if (targetTab) targetTab.classList.add('active');
-
-  if (pestanaNombre === 'mapa') {
-    if (!mapa) {
-      inicializarMapa();
-    } else {
-      setTimeout(() => mapa.invalidateSize(), 250);
-    }
-  }
-}
-
-// Inicializar Mapa con todas las estaciones de Barrancabermeja
 function inicializarMapa() {
-  if (mapa) return;
+  const contenedorMapa = document.getElementById("mapaEstaciones");
+  if (!contenedorMapa) return;
 
-  // Centrado en Barrancabermeja
-  mapa = L.map('mapaEstaciones').setView([7.0350, -73.8100], 11);
+  // Centro inicial: Barrancabermeja
+  mapaInstance = L.map("mapaEstaciones").setView([7.0625, -73.8521], 12);
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap | Ecopetrol - UNIPAZ'
-  }).addTo(mapa);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: '© OpenStreetMap | UNIPAZ - ECOPETROL'
+  }).addTo(mapaInstance);
 
-  // Agregar marcador por cada estación
-  estacionesBarrancabermeja.forEach(e => {
-    const popupContent = `
-      <div style="font-family: sans-serif; min-width:180px;">
-        <h4 style="margin:0 0 5px; color:#004d40;">${e.nombre}</h4>
-        <p style="margin:2px 0; font-size:12px;"><b>Sector:</b> ${e.sector}</p>
-        <p style="margin:2px 0; font-size:12px;"><b>Estado:</b> <span style="color:${e.estado === 'Operativo' ? 'green' : 'orange'}; font-weight:bold;">${e.estado}</span></p>
-        <p style="margin:5px 0; font-size:11px; color:#555;">${e.desc}</p>
-        <button onclick="agendarEstacionDirecto('${e.nombre}')" style="margin-top:5px; background:#004d40; color:white; border:none; padding:5px 10px; border-radius:3px; font-size:11px; cursor:pointer; width:100%;">📅 Programar Mantenimiento</button>
-      </div>
-    `;
-
-    L.marker([e.lat, e.lng])
-      .addTo(mapa)
-      .bindPopup(popupContent);
+  // Agregar Marcadores de las Estaciones
+  ESTACIONES.forEach(est => {
+    L.marker([est.lat, est.lng])
+      .addTo(mapaInstance)
+      .bindPopup(`<b>⚡ ${est.nombre}</b><br>Tipo: ${est.tipo}`);
   });
-
-  setTimeout(() => {
-    mapa.invalidateSize();
-  }, 300);
 }
 
-// Función GPS / Ubicación del celular en tiempo real
 function obtenerUbicacionGPS() {
   if (!navigator.geolocation) {
-    alert("Tu dispositivo o navegador no soporta la función de localización GPS.");
+    Swal.fire("Error", "Tu dispositivo o navegador no soporta GPS.", "error");
     return;
   }
 
+  Swal.fire({
+    title: 'Obteniendo GPS...',
+    text: 'Por favor permite el acceso a tu ubicación',
+    allowOutsideClick: false,
+    didOpen: () => { Swal.showLoading(); }
+  });
+
   navigator.geolocation.getCurrentPosition(
-    (posicion) => {
-      const lat = posicion.coords.latitude;
-      const lng = posicion.coords.longitude;
+    (position) => {
+      const { latitude, longitude } = position.coords;
 
-      if (marcadorUsuario) {
-        mapa.removeLayer(marcadorUsuario);
-      }
+      mapaInstance.setView([latitude, longitude], 15);
 
-      mapa.setView([lat, lng], 15);
-
-      marcadorUsuario = L.circleMarker([lat, lng], {
-        color: '#0288d1',
-        fillColor: '#03a9f4',
-        fillOpacity: 0.9,
-        radius: 10
-      }).addTo(mapa)
-        .bindPopup("<b>📍 Tu Ubicación Actual (GPS)</b>")
+      L.marker([latitude, longitude])
+        .addTo(mapaInstance)
+        .bindPopup("<b>🎯 Tu ubicación actual</b>")
         .openPopup();
+
+      Swal.close();
     },
     (error) => {
-      alert("No se pudo acceder a tu ubicación GPS. Asegúrate de activar el GPS del celular y dar permisos al navegador.");
+      Swal.close();
+      if (error.code === error.PERMISSION_DENIED) {
+        Swal.fire("Permiso denegado", "Debes activar el GPS y dar permisos de ubicación en tu navegador.", "warning");
+      } else {
+        Swal.fire("Error GPS", "No se pudo obtener la posición: " + error.message, "error");
+      }
     },
-    { enableHighAccuracy: true }
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
   );
 }
 
-// Llenar el select del formulario con las estaciones reales
-function cargarSelectEstaciones() {
-  const select = document.getElementById('equipo');
-  if (!select) return;
-  select.innerHTML = '<option value="">-- Seleccionar Estación / Equipo --</option>';
+/* ==========================================================================
+   2. GESTIÓN DE TÉCNICOS (DIRECTORIO)
+   ========================================================================== */
 
-  estacionesBarrancabermeja.forEach(e => {
-    const option = document.createElement('option');
-    option.value = `${e.nombre} (${e.sector})`;
-    option.textContent = `${e.nombre} - ${e.sector}`;
-    select.appendChild(option);
-  });
-}
-
-// Acceso directo a programar desde el marcador del mapa
-function agendarEstacionDirecto(nombreEstacion) {
-  cambiarPestana('agendamiento');
-  const selectEquipo = document.getElementById('equipo');
-  
-  for (let i = 0; i < selectEquipo.options.length; i++) {
-    if (selectEquipo.options[i].text.includes(nombreEstacion)) {
-      selectEquipo.selectedIndex = i;
-      break;
+async function cargarTecnicos() {
+  if (supabaseClient) {
+    const { data, error } = await supabaseClient.from("tecnicos").select("*");
+    if (!error && data && data.length > 0) {
+      listaTecnicos = data;
+    } else {
+      listaTecnicos = TECNICOS_DEFECTO;
     }
+  } else {
+    // Fallback a localStorage
+    const local = localStorage.getItem("tecnicos_data");
+    listaTecnicos = local ? JSON.parse(local) : TECNICOS_DEFECTO;
   }
+  renderizarTecnicos(listaTecnicos);
+  poblarSelectores();
 }
 
-// Procesar y comprimir la foto del técnico
-function procesarFotoArchivo(event) {
-  const archivo = event.target.files[0];
-  if (!archivo) return;
-
-  const lector = new FileReader();
-
-  lector.onload = function(e) {
-    const img = new Image();
-    img.src = e.target.result;
-
-    img.onload = function() {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      
-      const maxDimension = 300;
-      let width = img.width;
-      let height = img.height;
-
-      if (width > height) {
-        if (width > maxDimension) {
-          height *= maxDimension / width;
-          width = maxDimension;
-        }
-      } else {
-        if (height > maxDimension) {
-          width *= maxDimension / height;
-          height = maxDimension;
-        }
-      }
-
-      canvas.width = width;
-      canvas.height = height;
-
-      ctx.drawImage(img, 0, 0, width, height);
-      const fotoComprimida = canvas.toDataURL('image/jpeg', 0.8);
-
-      document.getElementById('tecFoto').value = fotoComprimida;
-
-      const imgPreview = document.getElementById('previewFotoTecnico');
-      imgPreview.src = fotoComprimida;
-      imgPreview.style.display = 'block';
-
-      document.getElementById('btnEliminarFoto').style.display = 'inline-block';
-    };
-  };
-
-  lector.readAsDataURL(archivo);
-}
-
-function eliminarFotoTecnico() {
-  document.getElementById('tecFoto').value = '';
-  document.getElementById('archivoFoto').value = '';
-
-  const imgPreview = document.getElementById('previewFotoTecnico');
-  if (imgPreview) {
-    imgPreview.src = '';
-    imgPreview.style.display = 'none';
-  }
-
-  const btnEliminar = document.getElementById('btnEliminarFoto');
-  if (btnEliminar) btnEliminar.style.display = 'none';
-}
-
-// Renderizado de técnicos en pantalla
-function renderizarTecnicos() {
-  const grid = document.getElementById('gridTecnicos');
+function renderizarTecnicos(tecnicos) {
+  const grid = document.getElementById("gridTecnicos");
   if (!grid) return;
-  grid.innerHTML = '';
+  grid.innerHTML = "";
 
-  tecnicos.forEach((t, index) => {
-    const fotoUrl = t.foto || avatarHombre;
-    
-    const card = document.createElement('div');
-    card.className = 'card-tecnico';
+  tecnicos.forEach((tec) => {
+    const card = document.createElement("div");
+    card.className = "card-tecnico";
     card.innerHTML = `
       <div class="acciones-tecnico">
-        <button class="btn-icon" onclick="editarTecnico(${index})">✏️</button>
-        <button class="btn-icon" onclick="eliminarTecnico(${index})">🗑️</button>
+        <button class="btn-icon" onclick="editarTecnico(${tec.id})" title="Editar"><i class="fa-solid fa-pen"></i></button>
+        <button class="btn-icon" onclick="confirmarEliminarTecnico(${tec.id})" title="Eliminar"><i class="fa-solid fa-trash" style="color:#ef4444;"></i></button>
       </div>
-      <img src="${fotoUrl}" alt="${t.nombre}">
-      <h3 style="margin:5px 0; font-size:16px;">${t.nombre}</h3>
-      <p style="font-size:12px; color:#666; margin:3px 0;"><b>Especialidad:</b> ${t.especialidad}</p>
-      <p style="font-size:12px; color:#666; margin:3px 0;"><b>Edad:</b> ${t.edad} años</p>
-      <span style="display:inline-block; background:#e0f2f1; color:#004d40; font-size:11px; padding:3px 8px; border-radius:12px; font-weight:bold; margin-top:5px;">
-        ${t.empresa}
-      </span>
-      <p style="font-size:11px; color:#888; margin-top:5px;">⏱️ ${t.jornada}</p>
-      <button onclick="verCuadroHorarios(${index})" style="width:100%; margin-top:10px; background:var(--secondary-color); color:white; border:none; padding:8px; border-radius:4px; font-size:12px; cursor:pointer;">
-        📅 Ver Cuadro de Horarios
+      <div>
+        <div class="card-header-img">
+          <img src="${tec.foto || 'https://via.placeholder.com/150'}" alt="${tec.nombre}">
+          <span class="status-badge" title="Disponible"></span>
+        </div>
+        <h3>${tec.nombre}</h3>
+        <p class="especialidad">${tec.especialidad}</p>
+        <p><i class="fa-solid fa-user"></i> Edad: ${tec.edad} años</p>
+        <div style="text-align:center;">
+          <span class="badge-empresa">${tec.empresa}</span>
+        </div>
+        <p style="font-size:12px; margin-top:5px;"><i class="fa-solid fa-clock"></i> ${tec.jornada}</p>
+      </div>
+      <button class="btn-horarios" onclick="verHorarioTecnico('${tec.nombre}')">
+        <i class="fa-solid fa-calendar-days"></i> Ver Cuadro de Horarios
       </button>
     `;
     grid.appendChild(card);
   });
 }
 
-function cargarSelectTecnicos() {
-  const select = document.getElementById('tecnico');
-  if (!select) return;
-  select.innerHTML = '<option value="">-- Seleccionar Técnico --</option>';
+function filtrarTecnicos() {
+  const texto = document.getElementById("inputBuscarTecnico").value.toLowerCase();
+  const tarjetas = document.querySelectorAll("#gridTecnicos .card-tecnico");
 
-  tecnicos.forEach(t => {
-    const opt = document.createElement('option');
-    opt.value = t.nombre;
-    opt.textContent = `${t.nombre} (${t.empresa})`;
-    select.appendChild(opt);
+  tarjetas.forEach(card => {
+    const contenido = card.innerText.toLowerCase();
+    card.style.display = contenido.includes(texto) ? "flex" : "none";
   });
 }
 
-// Modal Técnico CRUD
-function abrirModalFormTecnico() {
-  document.getElementById('formTecnico').reset();
-  document.getElementById('tecIndex').value = '';
-  document.getElementById('tituloModalTecnico').textContent = 'Agregar Nuevo Técnico';
-  eliminarFotoTecnico();
-  document.getElementById('modalFormTecnico').style.display = 'block';
-}
-
-function cerrarModalFormTecnico() {
-  document.getElementById('modalFormTecnico').style.display = 'none';
-}
-
-function guardarTecnico(e) {
-  e.preventDefault();
-  const index = document.getElementById('tecIndex').value;
-
+async function guardarTecnico(event) {
+  event.preventDefault();
+  const id = document.getElementById("tecIndex").value;
   const nuevoTecnico = {
-    nombre: document.getElementById('tecNombre').value,
-    especialidad: document.getElementById('tecEspecialidad').value,
-    edad: document.getElementById('tecEdad').value,
-    empresa: document.getElementById('tecEmpresa').value,
-    jornada: document.getElementById('tecJornada').value,
-    foto: document.getElementById('tecFoto').value || avatarHombre
+    nombre: document.getElementById("tecNombre").value,
+    especialidad: document.getElementById("tecEspecialidad").value,
+    edad: parseInt(document.getElementById("tecEdad").value),
+    empresa: document.getElementById("tecEmpresa").value,
+    jornada: document.getElementById("tecJornada").value,
+    foto: document.getElementById("tecFoto").value || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150"
   };
 
-  if (index === '') {
-    tecnicos.push(nuevoTecnico);
+  if (supabaseClient) {
+    if (id) {
+      await supabaseClient.from("tecnicos").update(nuevoTecnico).eq("id", id);
+    } else {
+      await supabaseClient.from("tecnicos").insert([nuevoTecnico]);
+    }
   } else {
-    tecnicos[index] = nuevoTecnico;
+    if (id) {
+      const idx = listaTecnicos.findIndex(t => t.id == id);
+      if (idx !== -1) listaTecnicos[idx] = { ...listaTecnicos[idx], ...nuevoTecnico };
+    } else {
+      nuevoTecnico.id = Date.now();
+      listaTecnicos.push(nuevoTecnico);
+    }
+    localStorage.setItem("tecnicos_data", JSON.stringify(listaTecnicos));
   }
 
-  guardarEstadoLocal();
-  renderizarTecnicos();
-  cargarSelectTecnicos();
   cerrarModalFormTecnico();
+  cargarTecnicos();
+  Swal.fire("¡Éxito!", "Los datos del técnico han sido guardados.", "success");
 }
 
-function editarTecnico(index) {
-  const t = tecnicos[index];
-  document.getElementById('tecIndex').value = index;
-  document.getElementById('tecNombre').value = t.nombre;
-  document.getElementById('tecEspecialidad').value = t.especialidad;
-  document.getElementById('tecEdad').value = t.edad;
-  document.getElementById('tecEmpresa').value = t.empresa;
-  document.getElementById('tecJornada').value = t.jornada;
-  
-  if (t.foto) {
-    document.getElementById('tecFoto').value = t.foto;
-    const imgPreview = document.getElementById('previewFotoTecnico');
-    imgPreview.src = t.foto;
-    imgPreview.style.display = 'block';
-    document.getElementById('btnEliminarFoto').style.display = 'inline-block';
+function confirmarEliminarTecnico(id) {
+  Swal.fire({
+    title: '¿Eliminar técnico?',
+    text: "Esta acción no se puede deshacer",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmColor: '#004d40',
+    cancelColor: '#d33',
+    confirmButtonText: 'Sí, eliminar',
+    cancelButtonText: 'Cancelar'
+  }).then(async (result) => {
+    if (result.isConfirmed) {
+      if (supabaseClient) {
+        await supabaseClient.from("tecnicos").delete().eq("id", id);
+      } else {
+        listaTecnicos = listaTecnicos.filter(t => t.id != id);
+        localStorage.setItem("tecnicos_data", JSON.stringify(listaTecnicos));
+      }
+      cargarTecnicos();
+      Swal.fire("Eliminado", "El técnico ha sido eliminado.", "success");
+    }
+  });
+}
+
+/* ==========================================================================
+   3. AGENDAMIENTO DE MANTENIMIENTOS
+   ========================================================================== */
+
+async function cargarMantenimientos() {
+  if (supabaseClient) {
+    const { data } = await supabaseClient.from("mantenimientos").select("*");
+    listaMantenimientos = data || [];
   } else {
-    eliminarFotoTecnico();
+    const local = localStorage.getItem("mantenimientos_data");
+    listaMantenimientos = local ? JSON.parse(local) : [];
   }
-
-  document.getElementById('tituloModalTecnico').textContent = 'Editar Técnico';
-  document.getElementById('modalFormTecnico').style.display = 'block';
-}
-
-function eliminarTecnico(index) {
-  if (confirm(`¿Estás seguro de eliminar a ${tecnicos[index].nombre}?`)) {
-    tecnicos.splice(index, 1);
-    guardarEstadoLocal();
-    renderizarTecnicos();
-    cargarSelectTecnicos();
-  }
-}
-
-// Mantenimientos CRUD
-function guardarMantenimiento(e) {
-  e.preventDefault();
-  const id = document.getElementById('mantenimientoId').value;
-
-  const item = {
-    id: id ? id : Date.now().toString(),
-    equipo: document.getElementById('equipo').value,
-    tipo: document.getElementById('tipo').value,
-    jornada: document.getElementById('jornada').value,
-    fecha: document.getElementById('fecha').value,
-    hora: document.getElementById('hora').value,
-    tecnico: document.getElementById('tecnico').value
-  };
-
-  if (id) {
-    const idx = mantenimientos.findIndex(m => m.id === id);
-    if (idx !== -1) mantenimientos[idx] = item;
-  } else {
-    mantenimientos.push(item);
-  }
-
-  guardarEstadoLocal();
   renderizarMantenimientos();
-  cancelarEdicionMantenimiento();
 }
 
 function renderizarMantenimientos() {
-  const tbody = document.getElementById('tablaMantenimientos');
+  const tbody = document.getElementById("tablaMantenimientos");
+  const filtro = document.getElementById("filtroTipo") ? document.getElementById("filtroTipo").value : "TODOS";
   if (!tbody) return;
-  const filtro = document.getElementById('filtroTipo').value;
-  tbody.innerHTML = '';
 
-  const listaFiltrada = filtro === 'TODOS' ? mantenimientos : mantenimientos.filter(m => m.tipo === filtro);
+  tbody.innerHTML = "";
 
-  if (listaFiltrada.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#888;">No hay mantenimientos agendados en el sistema.</td></tr>';
-    return;
-  }
+  const filtrados = listaMantenimientos.filter(m => filtro === "TODOS" || m.tipo === filtro);
 
-  listaFiltrada.forEach(m => {
-    const tr = document.createElement('tr');
+  filtrados.forEach((m) => {
+    const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${m.equipo}</td>
-      <td><b>${m.tipo}</b></td>
+      <td><b>${m.equipo}</b></td>
+      <td><span style="background:#e0f2fe; color:#0369a1; padding:3px 8px; border-radius:4px; font-weight:bold;">${m.tipo}</span></td>
       <td>${m.jornada}</td>
       <td>${m.fecha}</td>
       <td>${m.hora}</td>
       <td>${m.tecnico}</td>
       <td>
-        <button class="btn-icon" onclick="editarMantenimiento('${m.id}')">✏️</button>
-        <button class="btn-icon" onclick="eliminarMantenimiento('${m.id}')">🗑️</button>
+        <button class="btn-icon" onclick="eliminarMantenimiento(${m.id})" title="Eliminar"><i class="fa-solid fa-trash" style="color:#ef4444;"></i></button>
       </td>
     `;
     tbody.appendChild(tr);
   });
 }
 
-function editarMantenimiento(id) {
-  const m = mantenimientos.find(item => item.id === id);
-  if (!m) return;
+async function guardarMantenimiento(e) {
+  e.preventDefault();
+  const nuevoMantenimiento = {
+    equipo: document.getElementById("equipo").value,
+    tipo: document.getElementById("tipo").value,
+    jornada: document.getElementById("jornada").value,
+    fecha: document.getElementById("fecha").value,
+    hora: document.getElementById("hora").value,
+    tecnico: document.getElementById("tecnico").value
+  };
 
-  document.getElementById('mantenimientoId').value = m.id;
-  document.getElementById('equipo').value = m.equipo;
-  document.getElementById('tipo').value = m.tipo;
-  document.getElementById('jornada').value = m.jornada;
-  document.getElementById('fecha').value = m.fecha;
-  document.getElementById('hora').value = m.hora;
-  document.getElementById('tecnico').value = m.tecnico;
-
-  document.getElementById('tituloFormulario').textContent = 'Editar Mantenimiento';
-  document.getElementById('btnGuardar').textContent = 'Actualizar Mantenimiento';
-  document.getElementById('btnCancelar').style.display = 'inline-block';
-}
-
-function cancelarEdicionMantenimiento() {
-  document.getElementById('formularioMantenimiento').reset();
-  document.getElementById('mantenimientoId').value = '';
-  document.getElementById('tituloFormulario').textContent = 'Programar Nuevo Mantenimiento';
-  document.getElementById('btnGuardar').textContent = 'Guardar Mantenimiento';
-  document.getElementById('btnCancelar').style.display = 'none';
-}
-
-function eliminarMantenimiento(id) {
-  if (confirm('¿Eliminar este mantenimiento programado?')) {
-    mantenimientos = mantenimientos.filter(m => m.id !== id);
-    guardarEstadoLocal();
-    renderizarMantenimientos();
-  }
-}
-
-// Modal Ver Horario Técnico
-function verCuadroHorarios(index) {
-  const t = tecnicos[index];
-  const modalHeader = document.getElementById('modalHeader');
-  const modalContent = document.getElementById('modalHorarioContent');
-
-  modalHeader.innerHTML = `
-    <img src="${t.foto || avatarHombre}" style="width:60px; height:60px; border-radius:50%; object-fit:cover;">
-    <div>
-      <h3 style="margin:0; color:var(--primary-color);">${t.nombre}</h3>
-      <p style="margin:2px 0; font-size:12px; color:#555;">${t.especialidad} - <b>${t.empresa}</b></p>
-    </div>
-  `;
-
-  const trabajosAsignados = mantenimientos.filter(m => m.tecnico === t.nombre);
-
-  if (trabajosAsignados.length === 0) {
-    modalContent.innerHTML = '<p style="text-align:center; color:#777; padding:15px;">Este técnico no tiene mantenimientos asignados actualmente.</p>';
+  if (supabaseClient) {
+    await supabaseClient.from("mantenimientos").insert([nuevoMantenimiento]);
   } else {
-    let tablaHTML = `
-      <table>
-        <thead>
-          <tr>
-            <th>Equipo</th>
-            <th>Tipo</th>
-            <th>Fecha</th>
-            <th>Hora</th>
-          </tr>
-        </thead>
-        <tbody>
-    `;
-    trabajosAsignados.forEach(trabajo => {
-      tablaHTML += `
-        <tr>
-          <td>${trabajo.equipo}</td>
-          <td>${trabajo.tipo}</td>
-          <td>${trabajo.fecha}</td>
-          <td>${trabajo.hora}</td>
-        </tr>
-      `;
-    });
-    tablaHTML += '</tbody></table>';
-    modalContent.innerHTML = tablaHTML;
+    nuevoMantenimiento.id = Date.now();
+    listaMantenimientos.push(nuevoMantenimiento);
+    localStorage.setItem("mantenimientos_data", JSON.stringify(listaMantenimientos));
   }
 
-  document.getElementById('modalTecnico').style.display = 'block';
+  document.getElementById("formularioMantenimiento").reset();
+  cargarMantenimientos();
+  Swal.fire("Agendado", "Mantenimiento programado exitosamente.", "success");
+}
+
+async function eliminarMantenimiento(id) {
+  if (supabaseClient) {
+    await supabaseClient.from("mantenimientos").delete().eq("id", id);
+  } else {
+    listaMantenimientos = listaMantenimientos.filter(m => m.id != id);
+    localStorage.setItem("mantenimientos_data", JSON.stringify(listaMantenimientos));
+  }
+  cargarMantenimientos();
+}
+
+/* ==========================================================================
+   4. FUNCIONES AUXILIARES Y MODALES
+   ========================================================================== */
+
+function cambiarPestana(nombreTab) {
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+
+  const targetBtn = event.currentTarget;
+  const targetContent = document.getElementById(`tab-${nombreTab}`);
+
+  if (targetBtn) targetBtn.classList.add("active");
+  if (targetContent) targetContent.classList.add("active");
+
+  if (nombreTab === "mapa" && mapaInstance) {
+    setTimeout(() => mapaInstance.invalidateSize(), 300);
+  }
+}
+
+function poblarSelectores() {
+  const selectEquipo = document.getElementById("equipo");
+  const selectTecnico = document.getElementById("tecnico");
+
+  if (selectEquipo) {
+    selectEquipo.innerHTML = ESTACIONES.map(e => `<option value="${e.nombre}">${e.nombre}</option>`).join("");
+  }
+
+  if (selectTecnico) {
+    selectTecnico.innerHTML = listaTecnicos.map(t => `<option value="${t.nombre}">${t.nombre}</option>`).join("");
+  }
+}
+
+function abrirModalFormTecnico() {
+  document.getElementById("formTecnico").reset();
+  document.getElementById("tecIndex").value = "";
+  document.getElementById("tituloModalTecnico").innerText = "Agregar Técnico";
+  document.getElementById("modalFormTecnico").style.display = "block";
+}
+
+function cerrarModalFormTecnico() {
+  document.getElementById("modalFormTecnico").style.display = "none";
+}
+
+function editarTecnico(id) {
+  const tec = listaTecnicos.find(t => t.id == id);
+  if (!tec) return;
+
+  document.getElementById("tecIndex").value = tec.id;
+  document.getElementById("tecNombre").value = tec.nombre;
+  document.getElementById("tecEspecialidad").value = tec.especialidad;
+  document.getElementById("tecEdad").value = tec.edad;
+  document.getElementById("tecEmpresa").value = tec.empresa;
+  document.getElementById("tecJornada").value = tec.jornada;
+  document.getElementById("tecFoto").value = tec.foto;
+
+  document.getElementById("tituloModalTecnico").innerText = "Editar Técnico";
+  document.getElementById("modalFormTecnico").style.display = "block";
+}
+
+function procesarFotoArchivo(e) {
+  const file = e.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      document.getElementById("tecFoto").value = evt.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+function verHorarioTecnico(nombre) {
+  const mantenimientosTec = listaMantenimientos.filter(m => m.tecnico === nombre);
+  let html = `<h4>Programación de: ${nombre}</h4>`;
+
+  if (mantenimientosTec.length === 0) {
+    html += "<p>No tiene mantenimientos asignados actualmente.</p>";
+  } else {
+    html += "<ul>" + mantenimientosTec.map(m => `<li><b>${m.fecha} (${m.hora}):</b> ${m.equipo} - ${m.tipo}</li>`).join("") + "</ul>";
+  }
+
+  document.getElementById("modalHeader").innerHTML = `<h3>📅 Agenda de Trabajo</h3>`;
+  document.getElementById("modalHorarioContent").innerHTML = html;
+  document.getElementById("modalTecnico").style.display = "block";
 }
 
 function cerrarModalTecnico() {
-  document.getElementById('modalTecnico').style.display = 'none';
+  document.getElementById("modalTecnico").style.display = "none";
+}
+
+/* ==========================================================================
+   5. SINCRONIZACIÓN EN TIEMPO REAL (SUPABASE REALTIME)
+   ========================================================================== */
+
+function suscripcionTiempoReal() {
+  if (!supabaseClient) return;
+
+  supabaseClient
+    .channel("suscripcion-global")
+    .on("postgres_changes", { event: "*", schema: "public", table: "tecnicos" }, () => cargarTecnicos())
+    .on("postgres_changes", { event: "*", schema: "public", table: "mantenimientos" }, () => cargarMantenimientos())
+    .subscribe();
 }
