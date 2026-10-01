@@ -2,17 +2,16 @@
    CONFIGURACIÓN Y DATOS INICIALES
    ========================================================================== */
 
-// ⚠️ REEMPLAZA ESTOS VALORES CON TUS CLAVES DE SUPABASE
+// Credenciales configuradas para Supabase
 const SUPABASE_URL = "https://jseocskipyhkmzatdplx.supabase.co";
 const SUPABASE_KEY = "sb_publishable_DbyAT_qBKj3hDVuBk0zUoQ_sWVAxmXz";
 
-// Inicialización del cliente de Supabase (si existe la librería)
 let supabaseClient = null;
 if (typeof supabase !== 'undefined') {
   supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 }
 
-// Estaciones de Operación por Defecto (Barrancabermeja / ECOPETROL)
+// Estaciones de Operación por Defecto
 const ESTACIONES = [
   { id: 1, nombre: "Estación Galán", lat: 7.0625, lng: -73.8521, tipo: "Recolección" },
   { id: 2, nombre: "Estación Casabe", lat: 7.0210, lng: -73.8820, tipo: "Tratamiento" },
@@ -22,11 +21,13 @@ const ESTACIONES = [
   { id: 6, nombre: "Estación Llanito", lat: 7.1230, lng: -73.7910, tipo: "Recolección" }
 ];
 
-// Técnicos por defecto (si la base de datos está vacía)
+// Técnicos con teléfono y correo configurados por defecto
 const TECNICOS_DEFECTO = [
   {
     id: 1,
     nombre: "Ing. Carlos Mendoza",
+    telefono: "+573001234567",
+    email: "carlos.mendoza@ecopetrol.com.co",
     especialidad: "Mantenimiento de Transformadores y Motores AC",
     edad: 38,
     empresa: "Ecopetrol - Planta Central",
@@ -36,6 +37,8 @@ const TECNICOS_DEFECTO = [
   {
     id: 2,
     nombre: "Ingrid Johana Gómez",
+    telefono: "+573119876543",
+    email: "ingrid.gomez@ecopetrol.com.co",
     especialidad: "Mantenimiento de Bombas Electrosumergibles",
     edad: 34,
     empresa: "Ecopetrol - Operaciones",
@@ -45,6 +48,8 @@ const TECNICOS_DEFECTO = [
   {
     id: 3,
     nombre: "Ing. Fabio Yordith Blanco Maffiold",
+    telefono: "+573155554433",
+    email: "fabio.blanco@ecopetrol.com.co",
     especialidad: "Operador de Planta",
     edad: 32,
     empresa: "Ecopetrol",
@@ -54,6 +59,8 @@ const TECNICOS_DEFECTO = [
   {
     id: 4,
     nombre: "Ing. Harold Santiago Abaunza Quecho",
+    telefono: "+573202221100",
+    email: "harold.abaunza@ecopetrol.com.co",
     especialidad: "Programador de PLC's",
     edad: 28,
     empresa: "Ecopetrol",
@@ -86,14 +93,12 @@ function inicializarMapa() {
   const contenedorMapa = document.getElementById("mapaEstaciones");
   if (!contenedorMapa) return;
 
-  // Centro inicial: Barrancabermeja
   mapaInstance = L.map("mapaEstaciones").setView([7.0625, -73.8521], 12);
 
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: '© OpenStreetMap | UNIPAZ - ECOPETROL'
   }).addTo(mapaInstance);
 
-  // Agregar Marcadores de las Estaciones
   ESTACIONES.forEach(est => {
     L.marker([est.lat, est.lng])
       .addTo(mapaInstance)
@@ -117,20 +122,14 @@ function obtenerUbicacionGPS() {
   navigator.geolocation.getCurrentPosition(
     (position) => {
       const { latitude, longitude } = position.coords;
-
       mapaInstance.setView([latitude, longitude], 15);
-
-      L.marker([latitude, longitude])
-        .addTo(mapaInstance)
-        .bindPopup("<b>🎯 Tu ubicación actual</b>")
-        .openPopup();
-
+      L.marker([latitude, longitude]).addTo(mapaInstance).bindPopup("<b>🎯 Tu ubicación actual</b>").openPopup();
       Swal.close();
     },
     (error) => {
       Swal.close();
       if (error.code === error.PERMISSION_DENIED) {
-        Swal.fire("Permiso denegado", "Debes activar el GPS y dar permisos de ubicación en tu navegador.", "warning");
+        Swal.fire("Permiso denegado", "Habilita los permisos de ubicación en la configuración del navegador.", "warning");
       } else {
         Swal.fire("Error GPS", "No se pudo obtener la posición: " + error.message, "error");
       }
@@ -140,7 +139,146 @@ function obtenerUbicacionGPS() {
 }
 
 /* ==========================================================================
-   2. GESTIÓN DE TÉCNICOS (DIRECTORIO)
+   2. FUNCIONES DE NOTIFICACIÓN DUAL (EMAIL + WHATSAPP)
+   ========================================================================== */
+
+// A. Envío por Correo con EmailJS
+function enviarCorreoTecnico(emailTecnico, datos) {
+  if (typeof emailjs === 'undefined') return;
+
+  const templateParams = {
+    to_email: emailTecnico,
+    tecnico_nombre: datos.tecnico,
+    equipo: datos.equipo,
+    tipo: datos.tipo,
+    fecha: datos.fecha,
+    hora: datos.hora,
+    jornada: datos.jornada
+  };
+
+  // Puedes configurar tus IDs de plantilla de EmailJS cuando los crees
+  emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', templateParams)
+    .then(() => {
+      console.log('✅ Correo electrónico enviado exitosamente');
+    })
+    .catch((err) => {
+      console.error('❌ Error enviando correo:', err);
+    });
+}
+
+// B. Envío por WhatsApp
+function notificarTecnicoWhatsApp(telefonoTecnico, datos) {
+  const numeroLimpio = telefonoTecnico.replace(/[^0-9]/g, '');
+
+  const mensaje = `Hola! ⚡ *NUEVO MANTENIMIENTO ASIGNADO* %0A%0A` +
+    `*Equipo / Estación:* ${datos.equipo}%0A` +
+    `*Tipo:* ${datos.tipo}%0A` +
+    `*Fecha:* ${datos.fecha}%0A` +
+    `*Hora:* ${datos.hora}%0A` +
+    `*Jornada:* ${datos.jornada}%0A%0A` +
+    `Por favor confirma la recepción de este aviso.`;
+
+  const urlWhatsApp = `https://api.whatsapp.com/send?phone=${numeroLimpio}&text=${mensaje}`;
+  window.open(urlWhatsApp, '_blank');
+}
+
+/* ==========================================================================
+   3. GESTIÓN Y AGENDAMIENTO DE MANTENIMIENTOS
+   ========================================================================== */
+
+async function guardarMantenimiento(e) {
+  e.preventDefault();
+
+  const nuevoMantenimiento = {
+    equipo: document.getElementById("equipo").value,
+    tipo: document.getElementById("tipo").value,
+    jornada: document.getElementById("jornada").value,
+    fecha: document.getElementById("fecha").value,
+    hora: document.getElementById("hora").value,
+    tecnico: document.getElementById("tecnico").value
+  };
+
+  // Guardar en Supabase o LocalStorage
+  if (supabaseClient) {
+    await supabaseClient.from("mantenimientos").insert([nuevoMantenimiento]);
+  } else {
+    nuevoMantenimiento.id = Date.now();
+    listaMantenimientos.push(nuevoMantenimiento);
+    localStorage.setItem("mantenimientos_data", JSON.stringify(listaMantenimientos));
+  }
+
+  // Buscar datos de contacto del técnico asignado
+  const tecAsignado = listaTecnicos.find(t => t.nombre === nuevoMantenimiento.tecnico);
+
+  // 1. Enviar Correo Electrónico
+  if (tecAsignado && tecAsignado.email) {
+    enviarCorreoTecnico(tecAsignado.email, nuevoMantenimiento);
+  }
+
+  // 2. Notificar mediante WhatsApp
+  if (tecAsignado && tecAsignado.telefono) {
+    notificarTecnicoWhatsApp(tecAsignado.telefono, nuevoMantenimiento);
+  }
+
+  document.getElementById("formularioMantenimiento").reset();
+  cargarMantenimientos();
+
+  Swal.fire({
+    title: '¡Mantenimiento Agendado!',
+    text: 'Se han procesado las notificaciones por Correo Electrónico y WhatsApp.',
+    icon: 'success',
+    confirmColor: '#004d40'
+  });
+}
+
+async function cargarMantenimientos() {
+  if (supabaseClient) {
+    const { data } = await supabaseClient.from("mantenimientos").select("*");
+    listaMantenimientos = data || [];
+  } else {
+    const local = localStorage.getItem("mantenimientos_data");
+    listaMantenimientos = local ? JSON.parse(local) : [];
+  }
+  renderizarMantenimientos();
+}
+
+function renderizarMantenimientos() {
+  const tbody = document.getElementById("tablaMantenimientos");
+  const filtro = document.getElementById("filtroTipo") ? document.getElementById("filtroTipo").value : "TODOS";
+  if (!tbody) return;
+
+  tbody.innerHTML = "";
+  const filtrados = listaMantenimientos.filter(m => filtro === "TODOS" || m.tipo === filtro);
+
+  filtrados.forEach((m) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><b>${m.equipo}</b></td>
+      <td><span style="background:#e0f2fe; color:#0369a1; padding:3px 8px; border-radius:4px; font-weight:bold;">${m.tipo}</span></td>
+      <td>${m.jornada}</td>
+      <td>${m.fecha}</td>
+      <td>${m.hora}</td>
+      <td>${m.tecnico}</td>
+      <td>
+        <button class="btn-icon" onclick="eliminarMantenimiento(${m.id})" title="Eliminar"><i class="fa-solid fa-trash" style="color:#ef4444;"></i></button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+async function eliminarMantenimiento(id) {
+  if (supabaseClient) {
+    await supabaseClient.from("mantenimientos").delete().eq("id", id);
+  } else {
+    listaMantenimientos = listaMantenimientos.filter(m => m.id != id);
+    localStorage.setItem("mantenimientos_data", JSON.stringify(listaMantenimientos));
+  }
+  cargarMantenimientos();
+}
+
+/* ==========================================================================
+   4. DIRECTORIO Y GESTIÓN DE TÉCNICOS
    ========================================================================== */
 
 async function cargarTecnicos() {
@@ -152,7 +290,6 @@ async function cargarTecnicos() {
       listaTecnicos = TECNICOS_DEFECTO;
     }
   } else {
-    // Fallback a localStorage
     const local = localStorage.getItem("tecnicos_data");
     listaTecnicos = local ? JSON.parse(local) : TECNICOS_DEFECTO;
   }
@@ -180,14 +317,14 @@ function renderizarTecnicos(tecnicos) {
         </div>
         <h3>${tec.nombre}</h3>
         <p class="especialidad">${tec.especialidad}</p>
-        <p><i class="fa-solid fa-user"></i> Edad: ${tec.edad} años</p>
+        <p><i class="fa-solid fa-phone"></i> ${tec.telefono || 'Sin teléfono'}</p>
+        <p><i class="fa-solid fa-envelope"></i> ${tec.email || 'Sin correo'}</p>
         <div style="text-align:center;">
           <span class="badge-empresa">${tec.empresa}</span>
         </div>
-        <p style="font-size:12px; margin-top:5px;"><i class="fa-solid fa-clock"></i> ${tec.jornada}</p>
       </div>
       <button class="btn-horarios" onclick="verHorarioTecnico('${tec.nombre}')">
-        <i class="fa-solid fa-calendar-days"></i> Ver Cuadro de Horarios
+        <i class="fa-solid fa-calendar-days"></i> Ver Agenda
       </button>
     `;
     grid.appendChild(card);
@@ -209,6 +346,8 @@ async function guardarTecnico(event) {
   const id = document.getElementById("tecIndex").value;
   const nuevoTecnico = {
     nombre: document.getElementById("tecNombre").value,
+    telefono: document.getElementById("tecTelefono").value,
+    email: document.getElementById("tecEmail").value,
     especialidad: document.getElementById("tecEspecialidad").value,
     edad: parseInt(document.getElementById("tecEdad").value),
     empresa: document.getElementById("tecEmpresa").value,
@@ -235,7 +374,7 @@ async function guardarTecnico(event) {
 
   cerrarModalFormTecnico();
   cargarTecnicos();
-  Swal.fire("¡Éxito!", "Los datos del técnico han sido guardados.", "success");
+  Swal.fire("¡Guardado!", "El técnico ha sido registrado exitosamente.", "success");
 }
 
 function confirmarEliminarTecnico(id) {
@@ -263,82 +402,7 @@ function confirmarEliminarTecnico(id) {
 }
 
 /* ==========================================================================
-   3. AGENDAMIENTO DE MANTENIMIENTOS
-   ========================================================================== */
-
-async function cargarMantenimientos() {
-  if (supabaseClient) {
-    const { data } = await supabaseClient.from("mantenimientos").select("*");
-    listaMantenimientos = data || [];
-  } else {
-    const local = localStorage.getItem("mantenimientos_data");
-    listaMantenimientos = local ? JSON.parse(local) : [];
-  }
-  renderizarMantenimientos();
-}
-
-function renderizarMantenimientos() {
-  const tbody = document.getElementById("tablaMantenimientos");
-  const filtro = document.getElementById("filtroTipo") ? document.getElementById("filtroTipo").value : "TODOS";
-  if (!tbody) return;
-
-  tbody.innerHTML = "";
-
-  const filtrados = listaMantenimientos.filter(m => filtro === "TODOS" || m.tipo === filtro);
-
-  filtrados.forEach((m) => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td><b>${m.equipo}</b></td>
-      <td><span style="background:#e0f2fe; color:#0369a1; padding:3px 8px; border-radius:4px; font-weight:bold;">${m.tipo}</span></td>
-      <td>${m.jornada}</td>
-      <td>${m.fecha}</td>
-      <td>${m.hora}</td>
-      <td>${m.tecnico}</td>
-      <td>
-        <button class="btn-icon" onclick="eliminarMantenimiento(${m.id})" title="Eliminar"><i class="fa-solid fa-trash" style="color:#ef4444;"></i></button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-async function guardarMantenimiento(e) {
-  e.preventDefault();
-  const nuevoMantenimiento = {
-    equipo: document.getElementById("equipo").value,
-    tipo: document.getElementById("tipo").value,
-    jornada: document.getElementById("jornada").value,
-    fecha: document.getElementById("fecha").value,
-    hora: document.getElementById("hora").value,
-    tecnico: document.getElementById("tecnico").value
-  };
-
-  if (supabaseClient) {
-    await supabaseClient.from("mantenimientos").insert([nuevoMantenimiento]);
-  } else {
-    nuevoMantenimiento.id = Date.now();
-    listaMantenimientos.push(nuevoMantenimiento);
-    localStorage.setItem("mantenimientos_data", JSON.stringify(listaMantenimientos));
-  }
-
-  document.getElementById("formularioMantenimiento").reset();
-  cargarMantenimientos();
-  Swal.fire("Agendado", "Mantenimiento programado exitosamente.", "success");
-}
-
-async function eliminarMantenimiento(id) {
-  if (supabaseClient) {
-    await supabaseClient.from("mantenimientos").delete().eq("id", id);
-  } else {
-    listaMantenimientos = listaMantenimientos.filter(m => m.id != id);
-    localStorage.setItem("mantenimientos_data", JSON.stringify(listaMantenimientos));
-  }
-  cargarMantenimientos();
-}
-
-/* ==========================================================================
-   4. FUNCIONES AUXILIARES Y MODALES
+   5. NAVEGACIÓN Y AUXILIARES
    ========================================================================== */
 
 function cambiarPestana(nombreTab) {
@@ -386,6 +450,8 @@ function editarTecnico(id) {
 
   document.getElementById("tecIndex").value = tec.id;
   document.getElementById("tecNombre").value = tec.nombre;
+  document.getElementById("tecTelefono").value = tec.telefono || "";
+  document.getElementById("tecEmail").value = tec.email || "";
   document.getElementById("tecEspecialidad").value = tec.especialidad;
   document.getElementById("tecEdad").value = tec.edad;
   document.getElementById("tecEmpresa").value = tec.empresa;
@@ -425,10 +491,6 @@ function verHorarioTecnico(nombre) {
 function cerrarModalTecnico() {
   document.getElementById("modalTecnico").style.display = "none";
 }
-
-/* ==========================================================================
-   5. SINCRONIZACIÓN EN TIEMPO REAL (SUPABASE REALTIME)
-   ========================================================================== */
 
 function suscripcionTiempoReal() {
   if (!supabaseClient) return;
