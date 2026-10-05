@@ -1,37 +1,28 @@
-/* ==========================================================================
-   RESET & ESTILOS BASE CORPORATIVOS (UNIPAZ & ECOPETROL)
-   ========================================================================== */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+:root {
+    --primary-color: #00563B;
+    --secondary-color: #00875A;
+    --accent-color: #F4A100;
+    --bg-color: #F4F6F8;
+    --card-bg: #FFFFFF;
+    --text-color: #333333;
+    --text-muted: #666666;
+    --border-color: #E0E0E0;
+    --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
 }
 
-:root {
-  --primary-color: #004d40;
-  --primary-dark: #00332c;
-  --primary-light: #e0f2f1;
-  --accent-ecopetrol: #2e7d32;
-  --accent-ecopetrol-light: #e8f5e9;
-  --bg-main: #f4f6f9;
-  --card-bg: #ffffff;
-  --text-dark: #2c3e50;
-  --text-muted: #6c757d;
-  --border-color: #e2e8f0;
-  --danger-color: #d32f2f;
-  --info-color: #0288d1;
-  --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
-  --shadow-lg: 0 10px 25px rgba(0,0,0,0.15);
-  --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 body {
-  background-color: var(--bg-main);
-  color: var(--text-dark);
-  line-height: 1.5;
-  min-height: 100vh;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.6;
 }
 
 /* ==========================================================================
