@@ -1,15 +1,15 @@
-/* ==========================================================================
+/* 
    CONFIGURACIÓN E INICIALIZACIÓN DE SUPABASE
-   ========================================================================== */
+   
 
 const SUPABASE_URL = "https://jseocskipyhkmzatdplx.supabase.co";
 const SUPABASE_KEY = "sb_publishable_DbyAT_qBKj3hDVuBk0zUoQ_sWVAxmXz";
 window.supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 var supabase = window.supabaseClient;
 
-/* ==========================================================================
+/* 
    DATOS INICIALES Y UBICACIONES GEOGRÁFICAS
-   ========================================================================== */
+   
 
 // Variable global para controlar la instancia del mapa Leaflet
 let mapInstance = null;
@@ -109,9 +109,9 @@ document.addEventListener("DOMContentLoaded", () => {
     aplicarPermisosPorRol();
 });
 
-/* ==========================================================================
+/* 
    INICIALIZACIÓN DEL MAPA LEAFLET
-   ========================================================================== */
+   
 
 function inicializarMapa() {
     const mapDiv = document.getElementById('map');
@@ -139,9 +139,9 @@ function inicializarMapa() {
     });
 }
 
-/* ==========================================================================
+/* 
    INGRESO, SALIDA Y ROLES
-   ========================================================================== */
+   
 
 function ejecutarIngresoDirecto() {
     const email = document.getElementById("loginEmail").value || "harold.abaunzaque@unipaz.edu.co";
@@ -219,9 +219,9 @@ function cerrarSesion() {
     }
 }
 
-/* ==========================================================================
+/* 
    NAVEGACIÓN TAB Y CARGA DE MAPA
-   ========================================================================== */
+   
 
 function cambiarTab(tabName, element) {
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
@@ -242,9 +242,9 @@ function cambiarTab(tabName, element) {
     }
 }
 
-/* ==========================================================================
+/* 
    GESTIÓN Y ENVÍO DE ÓRDENES (EMAILJS)
-   ========================================================================== */
+   
 
 function cargarSelectTecnicos() {
     const select = document.getElementById("ordenTecnico");
@@ -407,9 +407,9 @@ function enviarNotificacionEmail(orden) {
         });
 }
 
-/* ==========================================================================
+/* 
    DIRECTORIO DE TÉCNICOS
-   ========================================================================== */
+   
 
 function renderizarTecnicos(lista) {
     const grid = document.getElementById("gridTecnicos");

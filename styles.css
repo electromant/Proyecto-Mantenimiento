@@ -1,8 +1,8 @@
-/* ==========================================================================
+/* 
    RESET & ESTILOS BASE CORPORATIVOS (UNIPAZ & ECOPETROL)
-   ========================================================================== */
+   
    VARIABLES GLOBALES Y TEMA
-   ========================================================================== */
+   
 :root {
   --primary-color: #004d40;       /* Verde Ecopetrol */
   --primary-hover: #00332c;
@@ -52,9 +52,9 @@ body {
   min-height: 100vh;
 }
 
-/* ==========================================================================
+/* 
    VISIBILIDAD Y LOGIN OVERLAY (OPTIMIZADO PARA ZOOM Y ESCALA)
-   ========================================================================== */
+   
 body.not-logged-in header,
 body.not-logged-in nav,
 body.not-logged-in main {
@@ -70,9 +70,9 @@ body {
   line-height: 1.6;
 }
 
-/* ==========================================================================
+/* 
    PANTALLA DE LOGIN (MODERNA & GLASSMORPHISM)
-   ========================================================================== */
+   
 .login-overlay {
   position: fixed;
   top: 0;
@@ -164,9 +164,9 @@ body {
   margin-top: 2px;
 }
 
-/* ==========================================================================
+/* 
    HEADER Y LOGOS SUPERIORES
-   ========================================================================== */
+   
 header {
   background: linear-gradient(90deg, var(--primary-dark) 0%, var(--primary-color) 100%);
   color: #ffffff;
@@ -255,9 +255,9 @@ header {
   transform: translateY(-1px);
 }
 
-/* ==========================================================================
+/* 
    NAVEGACIÓN POR PESTAÑAS
-   ========================================================================== */
+   
 .nav-tabs {
   background: #ffffff;
   display: flex;
@@ -288,9 +288,9 @@ header {
   font-weight: 500;
 }
 
-/* ==========================================================================
+/* 
    ESTILOS DE FORMULARIO
-   ========================================================================== */
+   
 .form-group {
   margin-bottom: 1.2rem;
   display: flex;
@@ -369,9 +369,9 @@ header {
   background: #cbd5e1;
 }
 
-/* ==========================================================================
+/* 
    CABECERA PRINCIPAL Y NAVEGACIÓN
-   ========================================================================== */
+   
 .main-header {
   background: linear-gradient(90deg, var(--primary-color), #00281e);
   color: white;
@@ -447,9 +447,9 @@ header {
   background-color: rgba(0, 77, 64, 0.05);
 }
 
-/* ==========================================================================
+/* 
    CONTENEDOR PRINCIPAL Y TARJETAS
-   ========================================================================== */
+   
 .container {
   max-width: 1280px;
   margin: 25px auto;
@@ -459,9 +459,9 @@ header {
   border-bottom-color: var(--primary-color);
 }
 
-/* ==========================================================================
+/* 
    ESTRUCTURA DE CONTENIDO Y SECCIONES
-   ========================================================================== */
+   
 .container {
   max-width: 1280px;
   margin: 2rem auto;
@@ -509,9 +509,9 @@ header {
   gap: 10px;
 }
 
-/* ==========================================================================
+/* 
    FORMULARIOS Y CAMPOS DE ENTRADA
-   ========================================================================== */
+   
 .form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -613,9 +613,9 @@ input:focus, select:focus {
 .mt-15 { margin-top: 15px; }
 .mt-20 { margin-top: 20px; }
 
-/* ==========================================================================
+/* 
    DIRECTORIO DE TÉCNICOS Y TARJETAS
-   ========================================================================== */
+   
   animation: fadeIn 0.3s ease-in-out;
 }
 
@@ -637,25 +637,17 @@ input:focus, select:focus {
 .actions-group input {
   min-width: 240px;
 }
-
+/* TARJETAS DE TÉCNICOS (GRID RE-DISEÑADO) */
 .grid-tecnicos {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
 .section-header h2 {
-  font-size: 1.25rem;
-  color: var(--primary-color);
+    font-size: 1.25rem;
+    color: var(--primary-color);
 }
-
-/* ==========================================================================
-   TARJETAS DE TÉCNICOS (GRID RE-DISEÑADO)
-   ========================================================================== */
-.grid-tecnicos {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
-
-  gap: 20px;
-}
-
 .card-tecnico {
   background: var(--card-bg);
   border-radius: 14px;
@@ -685,7 +677,7 @@ input:focus, select:focus {
 }
 
 .tecnico-img {
-=======
+
 }
 
 .card-header-img {
@@ -783,13 +775,13 @@ input:focus, select:focus {
   color: var(--danger-color);
 }
 
-/* ==========================================================================
+/* 
    TABLA DE HISTORIAL DE ÓRDENES
-   ========================================================================== */
+   
 .table-responsive {
   overflow-x: auto;
   margin-top: 15px;
-=======
+
   background: #e0f2fe;
   color: #0369a1;
   padding: 3px 10px;
@@ -840,9 +832,9 @@ input:focus, select:focus {
   color: var(--primary-color);
 }
 
-/* ==========================================================================
+/* 
    LAYOUT DE MANTENIMIENTO Y TABLAS
-   ========================================================================== */
+   
 .mantenimiento-layout {
   display: grid;
   grid-template-columns: 350px 1fr;
@@ -889,7 +881,7 @@ th, td {
 
 th {
   background-color: #f8fafc;
-=======
+
   text-align: left;
   border-bottom: 1px solid var(--border-color);
 }
@@ -931,9 +923,9 @@ tr:hover {
   width: auto;
 }
 
-/* ==========================================================================
+/* 
    MODALES
-   ========================================================================== */
+   
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -981,9 +973,9 @@ body.rol-tecnico .mantenimiento-layout {
   grid-template-columns: 1fr !important;
 }
 
-/* ==========================================================================
+/* 
    MODALES Y POPUPS
-   ========================================================================== */
+   
 .modal {
   display: none;
   position: fixed;
@@ -1051,9 +1043,9 @@ body.rol-tecnico .mantenimiento-layout {
   box-shadow: var(--shadow-sm);
 }
 
-/* ==========================================================================
+/* 
    RESPONSIVE DESIGN
-   ========================================================================== */
+   
 @media (max-width: 768px) {
   .header-content {
     flex-direction: column;
@@ -1084,7 +1076,7 @@ body.rol-tecnico .mantenimiento-layout {
     width: 100%;
   }
 }
-=======
+
   right: 20px;
   top: 15px;
   font-size: 1.5rem;
