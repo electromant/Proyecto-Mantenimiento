@@ -108,7 +108,6 @@ document.addEventListener("DOMContentLoaded", () => {
 // ==========================================
 // 1. INICIALIZACIÓN DEL MAPA LEAFLET
 // ==========================================
-let mapInstance = null;
 
 window.inicializarMapa = function() {
     const mapDiv = document.getElementById('mapaLeaflet') || document.getElementById('map');
