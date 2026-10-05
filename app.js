@@ -214,24 +214,42 @@ function cerrarSesion() {
 
 // NAVEGACIÓN TAB Y CARGA DE MAPA
    
-function cambiarTab(tabName, element) {
+window.cambiarPestana = window.cambiarTab = function(tabName, element) {
+    // Ocultar todos los contenidos
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    
+    // Desactivar todos los botones de navegacion
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
 
-    const activeTab = document.getElementById(`tab-${tabName}`);
-    if (activeTab) activeTab.classList.add('active');
-    if (element) element.classList.add('active');
+    // Normalizar nombre para el tab de tecnicos/directorio
+    let targetId = tabName;
+    if (tabName === 'tecnicos') targetId = 'directorio';
 
+    // Buscar el elemento contenedor correspondiente
+    const activeTab = document.getElementById(`tab-${targetId}`) || 
+                      document.getElementById(`tab-${tabName}`) || 
+                      document.getElementById(targetId);
+
+    if (activeTab) activeTab.classList.add('active');
+
+    // Activar el boton presionado
+    if (element) {
+        element.classList.add('active');
+    } else if (window.event && window.event.currentTarget) {
+        window.event.currentTarget.classList.add('active');
+    }
+
+    // Reajustar el mapa Leaflet si se selecciona la pestaña de mapa
     if (tabName === 'mapa') {
         setTimeout(() => {
-            if (mapInstance === null) {
+            if (typeof inicializarMapa === 'function' && mapInstance === null) {
                 inicializarMapa();
-            } else {
+            } else if (mapInstance) {
                 mapInstance.invalidateSize();
             }
         }, 200);
     }
-}
+};
 
 // GESTIÓN Y ENVÍO DE ÓRDENES (EMAILJS)
    
