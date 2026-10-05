@@ -684,3 +684,17 @@ tr:hover {
     width: 100%;
   }
 }
+
+.login-header-logos {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.login-logo {
+    max-height: 55px;
+    width: auto;
+    object-fit: contain;
+}
