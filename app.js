@@ -212,10 +212,8 @@ function cerrarSesion() {
     }
 }
 
-/* 
-   NAVEGACIÓN TAB Y CARGA DE MAPA
+// NAVEGACIÓN TAB Y CARGA DE MAPA
    
-
 function cambiarTab(tabName, element) {
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -235,10 +233,8 @@ function cambiarTab(tabName, element) {
     }
 }
 
-/* 
-   GESTIÓN Y ENVÍO DE ÓRDENES (EMAILJS)
+// GESTIÓN Y ENVÍO DE ÓRDENES (EMAILJS)
    
-
 function cargarSelectTecnicos() {
     const select = document.getElementById("ordenTecnico");
     if (!select) return;
@@ -400,10 +396,8 @@ function enviarNotificacionEmail(orden) {
         });
 }
 
-/* 
-   DIRECTORIO DE TÉCNICOS
+// DIRECTORIO DE TÉCNICOS
    
-
 function renderizarTecnicos(lista) {
     const grid = document.getElementById("gridTecnicos");
     if (!grid) return;
