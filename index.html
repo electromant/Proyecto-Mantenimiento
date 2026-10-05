@@ -5,158 +5,176 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Gestión - UNIPAZ & ECOPETROL</title>
 
-    <!-- Leaflet CSS -->
+    <!-- Fuentes Google (Plus Jakarta Sans) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Leaflet CSS (Mapa) -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- FontAwesome CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <!-- FontAwesome CSS (Iconos) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- SweetAlert2 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    
+
     <!-- Estilos Personalizados -->
     <link rel="stylesheet" href="styles.css">
 
-    <!-- EmailJS SDK e Inicialización -->
+    <!-- EmailJS SDK -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript">
-      (function() {
-          emailjs.init("JE11549ZTfvlO5Ozg");
-      })();
+        (function() {
+            emailjs.init("JE11549ZTFv1050zg");
+        })();
     </script>
 </head>
 <body class="not-logged-in">
 
-    <!-- OVERLAY DE LOGIN -->
+    <!-- OVERLAY DE INICIO DE SESIÓN -->
     <div id="loginOverlay" class="login-overlay">
         <div class="login-card">
-            <div class="login-logos">
-                <img src="logo-unipaz.png" alt="Logo UNIPAZ" class="login-logo-img">
-                <img src="logo-ecopetrol.png" alt="Logo ECOPETROL" class="login-logo-img">
+            <div class="login-header-logos">
+                <span class="badge-institution"><i class="fa-solid fa-graduation-cap"></i> UNIPAZ</span>
+                <span class="badge-institution ecopetrol"><i class="fa-solid fa-leaf"></i> ECOPETROL</span>
             </div>
-            <div class="login-header">
-                <i class="fa-solid fa-user-lock"></i>
-                <h2>Iniciar Sesión</h2>
-                <p>Gestión de Mantenimientos Electromecánicos</p>
+            
+            <div class="login-icon">
+                <i class="fa-solid fa-user-shield"></i>
             </div>
+
+            <h2>Iniciar Sesión</h2>
+            <p class="login-subtitle">Gestión de Mantenimientos Electromecánicos</p>
+
             <div class="form-group">
-                <label><i class="fa-solid fa-envelope"></i> Correo Electrónico:</label>
-                <input type="email" id="loginEmail" placeholder="harold.abaunzaque@unipaz.edu.co" value="harold.abaunzaque@unipaz.edu.co">
+                <label for="loginEmail"><i class="fa-solid fa-envelope"></i> Correo Electrónico:</label>
+                <input type="email" id="loginEmail" value="harold.abaunzaque@unipaz.edu.co" class="form-control" placeholder="nombre@correo.com">
             </div>
-            <div class="form-group mt-15">
-                <label><i class="fa-solid fa-key"></i> Contraseña:</label>
-                <input type="password" id="loginPassword" placeholder="••••••••" value="123456">
+
+            <div class="form-group">
+                <label for="loginPass"><i class="fa-solid fa-key"></i> Contraseña:</label>
+                <input type="password" id="loginPass" value="123456" class="form-control" placeholder="••••••••">
             </div>
-            <div class="form-group mt-15">
-                <label><i class="fa-solid fa-user-gear"></i> Rol de Usuario:</label>
-                <select id="loginRole">
-                    <option value="Supervisor">Supervisor</option>
+
+            <div class="form-group">
+                <label for="loginRole"><i class="fa-solid fa-user-gear"></i> Rol de Usuario:</label>
+                <select id="loginRole" class="form-control">
+                    <option value="Supervisor" selected>Supervisor</option>
                     <option value="Técnico">Técnico</option>
                 </select>
             </div>
-            <button type="button" class="btn-primary btn-block mt-20" onclick="ejecutarIngresoDirecto()">
+
+            <button type="button" onclick="ejecutarIngresoDirecto()" class="btn-primary btn-block">
                 <i class="fa-solid fa-right-to-bracket"></i> Ingresar
             </button>
         </div>
     </div>
 
-    <!-- ENCABEZADO PRINCIPAL -->
-    <header>
-        <div class="header-content">
-            <div class="header-brand">
-                <div class="logos-container">
-                    <img src="logo-unipaz.png" alt="UNIPAZ" class="logo-img logo-unipaz">
-                    <img src="logo-ecopetrol.png" alt="ECOPETROL" class="logo-img logo-ecopetrol">
-                </div>
-                <h1>Gestión de Mantenimientos Electromecánicos</h1>
+    <!-- NAVEGACIÓN SUPERIOR / NAVBAR -->
+    <header class="main-header">
+        <div class="header-container">
+            <div class="brand-container">
+                <span class="brand-tag">UNIPAZ</span>
+                <span class="brand-tag eco">ECOPETROL</span>
+                <h1 class="system-title">Gestión de Mantenimientos</h1>
             </div>
-            <div class="user-info">
-                <span id="userBadgeRole">Rol: Supervisor (harold.abaunzaque@unipaz.edu.co)</span>
-                <button class="btn-logout" onclick="cerrarSesion()">
-                    <i class="fa-solid fa-power-off"></i> Salir
-                </button>
+
+            <div class="user-status-bar">
+                <span id="userBadgeRole" class="user-badge"><i class="fa-solid fa-circle-user"></i> Rol: Supervisor</span>
+                <button onclick="cerrarSesion()" class="btn-logout"><i class="fa-solid fa-power-off"></i> Salir</button>
             </div>
         </div>
     </header>
 
-    <!-- NAVEGACIÓN -->
-    <nav class="nav-tabs">
-        <button class="tab-btn active" onclick="cambiarTab('ordenes', this)">
-            <i class="fa-solid fa-calendar-check"></i> Gestión de Órdenes
-        </button>
-        <button class="tab-btn" onclick="cambiarTab('mapa', this)">
-            <i class="fa-solid fa-map-location-dot"></i> Geolocalización de Estaciones
-        </button>
-        <button class="tab-btn" onclick="cambiarTab('tecnicos', this)">
-            <i class="fa-solid fa-users-gears"></i> Directorio de Técnicos
-        </button>
+    <!-- MENÚ DE PESTAÑAS -->
+    <nav class="nav-tabs-container">
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="cambiarPestana('agendamiento')">
+                <i class="fa-solid fa-calendar-check"></i> Agendamiento
+            </button>
+            <button class="tab-btn" onclick="cambiarPestana('mapa')">
+                <i class="fa-solid fa-map-location-dot"></i> Mapa de Estaciones
+            </button>
+            <button class="tab-btn" onclick="cambiarPestana('tecnicos')">
+                <i class="fa-solid fa-users-gears"></i> Directorio de Técnicos
+            </button>
+        </div>
     </nav>
 
     <!-- CONTENIDO PRINCIPAL -->
-    <main class="container">
+    <main class="main-content container">
 
-        <!-- TAB 1: GESTIÓN DE ÓRDENES -->
-        <section id="tab-ordenes" class="tab-content active">
-            <div class="card">
-                <h2><i class="fa-solid fa-pen-to-square"></i> Programar Orden de Mantenimiento</h2>
+        <!-- SECCIÓN 1: AGENDAMIENTO -->
+        <section id="sec-agendamiento" class="tab-content active">
+            
+            <div class="card-box supervisor-only">
+                <div class="card-header-title">
+                    <h2><i class="fa-solid fa-calendar-plus"></i> Programar Orden de Mantenimiento</h2>
+                </div>
+                
                 <form id="formOrden" onsubmit="guardarOrden(event)">
                     <div class="form-grid">
                         <div class="form-group">
                             <label><i class="fa-solid fa-industry"></i> Estación / Equipo:</label>
-                            <!-- SELECT CON TODAS LAS ESTACIONES NUEVAS -->
-                            <select id="ordenEstacion" required>
-                                <option value="">-- Seleccionar Ubicación --</option>
-                                <option value="Campo La Cira Infantas - Estación Cira 1">Campo La Cira Infantas - Estación Cira 1</option>
-                                <option value="Estación Barrancabermeja Principal">Estación Barrancabermeja Principal</option>
-                                <option value="Refinería de Barrancabermeja - Unidad 2">Refinería de Barrancabermeja - Unidad 2</option>
-                                <option value="Estación de Bombeo Lisama">Estación de Bombeo Lisama</option>
-                                <option value="Campo Cantagallo - Estación Recolectora">Campo Cantagallo - Estación Recolectora</option>
-                                <option value="Campo Casabe - Estación Central">Campo Casabe - Estación Central</option>
-                                <option value="Planta de Gas Tibú">Planta de Gas Tibú</option>
-                                <option value="Estación Orito - Putumayo">Estación Orito - Putumayo</option>
+                            <select id="estacionSelect" class="form-control" required onchange="actualizarGeolocalizacionEnFormulario()">
+                                <option value="">-- Seleccione Ubicación --</option>
                             </select>
                         </div>
+
                         <div class="form-group">
-                            <label><i class="fa-solid fa-wrench"></i> Tipo de Mantenimiento:</label>
-                            <select id="ordenTipo" required>
+                            <label><i class="fa-solid fa-screwdriver-wrench"></i> Tipo Mantenimiento:</label>
+                            <select id="tipoMantenimiento" class="form-control">
                                 <option value="Preventivo">Preventivo</option>
                                 <option value="Correctivo">Correctivo</option>
                                 <option value="Predictivo">Predictivo</option>
                             </select>
                         </div>
+
                         <div class="form-group">
                             <label><i class="fa-solid fa-clock"></i> Jornada:</label>
-                            <select id="ordenJornada" required>
+                            <select id="jornadaSelect" class="form-control">
                                 <option value="Diurna (07:00 AM - 04:00 PM)">Diurna (07:00 AM - 04:00 PM)</option>
                                 <option value="Nocturna (07:00 PM - 04:00 AM)">Nocturna (07:00 PM - 04:00 AM)</option>
                             </select>
                         </div>
+
                         <div class="form-group">
-                            <label><i class="fa-solid fa-calendar-days"></i> Fecha:</label>
-                            <input type="date" id="ordenFecha" required>
+                            <label><i class="fa-solid fa-calendar-day"></i> Fecha:</label>
+                            <input type="date" id="fechaOrden" class="form-control" required>
                         </div>
+
                         <div class="form-group">
-                            <label><i class="fa-solid fa-stopwatch"></i> Hora:</label>
-                            <input type="time" id="ordenHora" required>
+                            <label><i class="fa-solid fa-hourglass-start"></i> Hora:</label>
+                            <input type="time" id="horaOrden" class="form-control" required>
                         </div>
+
                         <div class="form-group">
-                            <label><i class="fa-solid fa-user-ninja"></i> Técnico Asignado:</label>
-                            <select id="ordenTecnico" required>
-                                <option value="">-- Seleccionar Técnico --</option>
+                            <label><i class="fa-solid fa-user-gear"></i> Técnico Asignado:</label>
+                            <select id="tecnicoSelect" class="form-control" required onchange="autocompletarCorreoTecnico()">
+                                <option value="">-- Seleccione Técnico --</option>
                             </select>
                         </div>
+
+                        <div class="form-group full-width">
+                            <label><i class="fa-solid fa-envelope"></i> Correo Notificación:</label>
+                            <input type="email" id="correoTecnico" class="form-control" placeholder="Selecciona un técnico" readonly>
+                        </div>
                     </div>
-                    <button type="submit" class="btn-primary mt-20">
-                        <i class="fa-solid fa-paper-plane"></i> Guardar y Notificar Orden
-                    </button>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">
+                            <i class="fa-solid fa-paper-plane"></i> Guardar y Notificar Orden
+                        </button>
+                    </div>
                 </form>
             </div>
 
-            <!-- HISTORIAL DE ÓRDENES -->
-            <div class="card">
-                <div class="card-header-flex">
+            <!-- TABLA DE ÓRDENES -->
+            <div class="card-box mt-4">
+                <div class="table-header-flex">
                     <h2><i class="fa-solid fa-list-check"></i> Historial de Órdenes Agendadas</h2>
-                    <div class="filtro-box">
+                    <div class="filter-group">
                         <label>Filtrar por tipo:</label>
-                        <select id="filtroTipo" onchange="renderizarOrdenes()">
+                        <select id="filtroTipo" class="form-control-sm" onchange="renderizarTablaOrdenes()">
                             <option value="Todos">Todos</option>
                             <option value="Preventivo">Preventivo</option>
                             <option value="Correctivo">Correctivo</option>
@@ -164,8 +182,9 @@
                         </select>
                     </div>
                 </div>
+
                 <div class="table-responsive">
-                    <table>
+                    <table class="custom-table">
                         <thead>
                             <tr>
                                 <th>Estación/Equipo</th>
@@ -175,101 +194,50 @@
                                 <th>Hora</th>
                                 <th>Técnico</th>
                                 <th>Correo</th>
-                                <th>Acciones</th>
+                                <th class="text-center">Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="tablaOrdenesBody">
-                            <!-- Inyección dinámica -->
+                            <!-- Inyección JS -->
                         </tbody>
                     </table>
                 </div>
             </div>
+
         </section>
 
-        <!-- TAB 2: GEOLOCALIZACIÓN Y MAPA -->
-        <section id="tab-mapa" class="tab-content">
-            <div class="card">
+        <!-- SECCIÓN 2: MAPA -->
+        <section id="sec-mapa" class="tab-content">
+            <div class="card-box">
                 <h2><i class="fa-solid fa-map-location-dot"></i> Ubicación Geográfica de Estaciones</h2>
-                <p class="mb-15" style="color: #666;">Selecciona una estación para centrar el mapa o haz clic en los marcadores para ver la información:</p>
-                <div id="map" style="height: 480px; width: 100%; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);"></div>
+                <p class="section-desc">Selecciona una estación para centrar el mapa o interactúa con los marcadores.</p>
+                <div id="mapaLeaflet" class="map-container"></div>
             </div>
         </section>
 
-        <!-- TAB 3: DIRECTORIO DE TÉCNICOS -->
-        <section id="tab-tecnicos" class="tab-content">
-            <div class="card">
-                <div class="section-header mb-20">
+        <!-- SECCIÓN 3: DIRECTORIO DE TÉCNICOS -->
+        <section id="sec-tecnicos" class="tab-content">
+            <div class="card-box">
+                <div class="table-header-flex">
                     <h2><i class="fa-solid fa-id-card"></i> Personal Técnico Registrado</h2>
-                    <div class="actions-group">
-                        <input type="text" id="buscarTecnico" placeholder="Buscar por nombre o especialidad..." onkeyup="filtrarTecnicos()">
-                        <button class="btn-primary" onclick="abrirModalTecnico()">
-                            <i class="fa-solid fa-user-plus"></i> Registrar Técnico
-                        </button>
-                    </div>
+                    <button onclick="abrirModalAgregarTecnico()" class="btn-primary supervisor-only">
+                        <i class="fa-solid fa-user-plus"></i> Agregar Técnico
+                    </button>
                 </div>
-                <div class="grid-tecnicos" id="gridTecnicos">
-                    <!-- Tarjetas de técnicos -->
+
+                <div id="gridTecnicos" class="grid-cards-tecnicos mt-4">
+                    <!-- Inyección de Cards JS -->
                 </div>
             </div>
         </section>
 
     </main>
 
-    <!-- MODAL REGISTRAR/EDITAR TÉCNICO -->
-    <div id="modalTecnico" class="modal-overlay" style="display: none;">
-        <div class="modal-card">
-            <span class="close-btn" onclick="cerrarModalTecnico()">&times;</span>
-            <h2 id="modalTecnicoTitulo"><i class="fa-solid fa-user-gear"></i> Registrar Nuevo Técnico</h2>
-            <form id="formTecnico" onsubmit="guardarTecnico(event)">
-                <input type="hidden" id="tecnicoId">
-                <div class="form-group mt-15">
-                    <label>Nombre Completo:</label>
-                    <input type="text" id="tecNombre" required placeholder="Ej: Ing. Fabio Blanco">
-                </div>
-                <div class="form-group mt-15">
-                    <label>Especialidad / Cargo:</label>
-                    <input type="text" id="tecEspecialidad" required placeholder="Ej: Especialista Electromecánico">
-                </div>
-                <div class="form-group mt-15">
-                    <label>Correo Electrónico:</label>
-                    <input type="email" id="tecCorreo" required placeholder="ejemplo@gmail.com">
-                </div>
-                <div class="form-group mt-15">
-                    <label>Teléfono / WhatsApp:</label>
-                    <input type="text" id="tecTelefono" required placeholder="+57 300 000 0000">
-                </div>
-                <div class="form-group mt-15">
-                    <label>Empresa / Entidad:</label>
-                    <select id="tecEmpresa">
-                        <option value="ECOPETROL S.A.">ECOPETROL S.A.</option>
-                        <option value="UNIPAZ">UNIPAZ</option>
-                        <option value="Contratista Electromecánico">Contratista Electromecánico</option>
-                    </select>
-                </div>
-                <div class="form-group mt-15">
-                    <label>Foto de Perfil (URL o Cargar Archivo):</label>
-                    <input type="text" id="tecFotoUrl" placeholder="https://..." onchange="actualizarPreviewFoto()">
-                    <div class="file-upload-wrapper mt-10">
-                        <input type="file" id="tecFotoFile" accept="image/*" onchange="cargarFotoLocal(event)">
-                    </div>
-                    <div class="preview-box">
-                        <img id="imgPreview" src="https://via.placeholder.com/150" alt="Vista previa">
-                    </div>
-                </div>
-                <button type="submit" class="btn-primary btn-block mt-20">
-                    <i class="fa-solid fa-save"></i> Guardar Técnico
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Leaflet JS -->
+    <!-- Librerías JS al final -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- Supabase JS CDN (Versión Compatible v2) -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-    <!-- Lógica de la Aplicación -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="app.js"></script>
+
 </body>
 </html>
