@@ -108,7 +108,8 @@ document.addEventListener("DOMContentLoaded", () => {
 // INICIALIZACIÓN DEL MAPA LEAFLET
    
 function inicializarMapa() {
-    const mapDiv = document.getElementById('map');
+    // Buscar mapaLeaflet (el ID exacto de tu HTML) o map como respaldo
+    const mapDiv = document.getElementById('mapaLeaflet') || document.getElementById('map');
     if (!mapDiv) return;
 
     if (mapInstance !== null) {
@@ -116,21 +117,27 @@ function inicializarMapa() {
         return;
     }
 
-    mapInstance = L.map('map').setView([7.0620, -73.8500], 11);
+    // Inicializar mapa en el elemento encontrado
+    mapInstance = L.map(mapDiv.id).setView([7.0653, -73.8547], 11);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors'
     }).addTo(mapInstance);
 
-    estacionesUbicaciones.forEach(est => {
-        const marker = L.marker([est.lat, est.lng]).addTo(mapInstance);
-        marker.bindPopup(`
-            <div style="font-family: Arial, sans-serif; text-align: center;">
-                <h4 style="margin: 0 0 5px; color: #004d40;"><i class="fa-solid fa-industry"></i> ${est.nombre}</h4>
-                <p style="margin: 0; font-size: 12px; color: #555;">${est.descripcion}</p>
-            </div>
-        `);
-    });
+    // Dibujar marcadores usando tu arreglo estacionesUbicaciones
+    if (typeof estacionesUbicaciones !== 'undefined' && Array.isArray(estacionesUbicaciones)) {
+        estacionesUbicaciones.forEach(est => {
+            if (est.lat && est.lng) {
+                L.marker([est.lat, est.lng])
+                    .addTo(mapInstance)
+                    .bindPopup(`<b>${est.nombre}</b><br>${est.descripcion || ''}`);
+            }
+        });
+    }
+
+    setTimeout(() => {
+        if (mapInstance) mapInstance.invalidateSize();
+    }, 250);
 }
 
 // INGRESO, SALIDA Y ROLES
@@ -587,3 +594,36 @@ function cargarFotoLocal(event) {
         reader.readAsDataURL(file);
     }
 }
+
+// Función para editar un técnico registrado
+window.editarTecnico = function(id) {
+    let tecnicos = JSON.parse(localStorage.getItem('tecnicos')) || [];
+    const index = tecnicos.findIndex(t => t.id === id);
+
+    if (index === -1) {
+        alert("Técnico no encontrado.");
+        return;
+    }
+
+    const tec = tecnicos[index];
+    const nuevoNombre = prompt("Nombre del Técnico:", tec.nombre);
+    if (nuevoNombre === null) return;
+
+    const nuevaEspecialidad = prompt("Especialidad:", tec.especialidad || "");
+    if (nuevaEspecialidad === null) return;
+
+    const nuevoTelefono = prompt("Teléfono:", tec.telefono || "");
+    if (nuevoTelefono === null) return;
+
+    // Actualizar datos
+    tecnicos[index].nombre = nuevoNombre;
+    tecnicos[index].especialidad = nuevaEspecialidad;
+    tecnicos[index].telefono = nuevoTelefono;
+
+    localStorage.setItem('tecnicos', JSON.stringify(tecnicos));
+    alert("¡Datos del técnico actualizados correctamente!");
+
+    // Recargar vistas
+    if (typeof renderizarTecnicos === 'function') renderizarTecnicos();
+    if (typeof cargarSelectTecnicos === 'function') cargarSelectTecnicos();
+};
