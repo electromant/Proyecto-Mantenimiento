@@ -1,8 +1,6 @@
 /* ==========================================================================
-<<<<<<< HEAD
    RESET & ESTILOS BASE CORPORATIVOS (UNIPAZ & ECOPETROL)
    ========================================================================== */
-=======
    VARIABLES GLOBALES Y TEMA
    ========================================================================== */
 :root {
@@ -21,12 +19,10 @@
   --transition: all 0.3s ease;
 }
 
->>>>>>> 5ee17350b868d387e92ba30689544037c1b80770
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-<<<<<<< HEAD
   font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
 }
 
@@ -65,7 +61,6 @@ body.not-logged-in main {
   display: none !important;
 }
 
-=======
   font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
@@ -78,21 +73,18 @@ body {
 /* ==========================================================================
    PANTALLA DE LOGIN (MODERNA & GLASSMORPHISM)
    ========================================================================== */
->>>>>>> 5ee17350b868d387e92ba30689544037c1b80770
 .login-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-<<<<<<< HEAD
   background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-color) 60%, #1b5e20 100%);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 9999;
   padding: 15px;
-=======
   background: linear-gradient(135deg, rgba(0, 40, 30, 0.95), rgba(0, 77, 64, 0.9));
   backdrop-filter: blur(8px);
   display: flex;
@@ -100,12 +92,10 @@ body {
   align-items: center;
   z-index: 10000;
   padding: 20px;
->>>>>>> 5ee17350b868d387e92ba30689544037c1b80770
 }
 
 .login-card {
   background: var(--card-bg);
-<<<<<<< HEAD
   padding: 24px 28px;
   border-radius: 16px;
   box-shadow: var(--shadow-lg);
@@ -117,7 +107,6 @@ body {
 }
 
 @keyframes fadeInDown {
-=======
   padding: 2.5rem;
   border-radius: 16px;
   width: 100%;
@@ -128,12 +117,10 @@ body {
 }
 
 @keyframes fadeIn {
->>>>>>> 5ee17350b868d387e92ba30689544037c1b80770
   from { opacity: 0; transform: translateY(-20px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-<<<<<<< HEAD
 .login-logos {
   display: flex;
   justify-content: center;
@@ -275,7 +262,6 @@ header {
   background: #ffffff;
   display: flex;
   justify-content: center;
-=======
 .login-header {
   text-align: center;
   margin-bottom: 1.8rem;
@@ -422,13 +408,11 @@ header {
   display: flex;
   gap: 10px;
   padding: 0 2rem;
->>>>>>> 5ee17350b868d387e92ba30689544037c1b80770
   border-bottom: 2px solid var(--border-color);
   box-shadow: var(--shadow-sm);
 }
 
 .tab-btn {
-<<<<<<< HEAD
   padding: 14px 24px;
   border: none;
   background: transparent;
@@ -439,7 +423,6 @@ header {
   border-bottom: 3px solid transparent;
   transition: var(--transition);
   display: inline-flex;
-=======
   padding: 14px 20px;
   background: none;
   border: none;
@@ -449,12 +432,10 @@ header {
   border-bottom: 3px solid transparent;
   transition: var(--transition);
   display: flex;
->>>>>>> 5ee17350b868d387e92ba30689544037c1b80770
   align-items: center;
   gap: 8px;
 }
 
-<<<<<<< HEAD
 .tab-btn:hover {
   color: var(--primary-color);
   background-color: rgba(0, 77, 64, 0.03);
@@ -473,7 +454,6 @@ header {
   max-width: 1280px;
   margin: 25px auto;
   padding: 0 20px;
-=======
 .tab-btn.active, .tab-btn:hover {
   color: var(--primary-color);
   border-bottom-color: var(--primary-color);
@@ -486,20 +466,15 @@ header {
   max-width: 1280px;
   margin: 2rem auto;
   padding: 0 1.5rem;
->>>>>>> 5ee17350b868d387e92ba30689544037c1b80770
 }
 
 .tab-content {
   display: none;
-<<<<<<< HEAD
   animation: fadeIn 0.3s ease-in-out;
-=======
->>>>>>> 5ee17350b868d387e92ba30689544037c1b80770
 }
 
 .tab-content.active {
   display: block;
-<<<<<<< HEAD
 }
 
 @keyframes fadeIn {
@@ -641,24 +616,18 @@ input:focus, select:focus {
 /* ==========================================================================
    DIRECTORIO DE TÉCNICOS Y TARJETAS
    ========================================================================== */
-=======
   animation: fadeIn 0.3s ease-in-out;
 }
 
->>>>>>> 5ee17350b868d387e92ba30689544037c1b80770
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-<<<<<<< HEAD
-=======
   margin-bottom: 1.5rem;
->>>>>>> 5ee17350b868d387e92ba30689544037c1b80770
   flex-wrap: wrap;
   gap: 15px;
 }
 
-<<<<<<< HEAD
 .actions-group {
   display: flex;
   gap: 12px;
@@ -672,7 +641,6 @@ input:focus, select:focus {
 .grid-tecnicos {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-=======
 .section-header h2 {
   font-size: 1.25rem;
   color: var(--primary-color);
@@ -702,7 +670,6 @@ input:focus, select:focus {
 .card-tecnico:hover {
   transform: translateY(-4px);
   box-shadow: var(--shadow-md);
-<<<<<<< HEAD
   border-color: rgba(0, 77, 64, 0.3);
 }
 
@@ -728,12 +695,10 @@ input:focus, select:focus {
 }
 
 .card-header-img img {
->>>>>>> 5ee17350b868d387e92ba30689544037c1b80770
   width: 90px;
   height: 90px;
   border-radius: 50%;
   object-fit: cover;
-<<<<<<< HEAD
   margin-bottom: 10px;
   border: 3px solid var(--primary-color);
   box-shadow: var(--shadow-sm);
@@ -759,7 +724,6 @@ input:focus, select:focus {
   display: flex;
   align-items: center;
   justify-content: center;
-=======
   border: 3px solid var(--primary-color);
 }
 
@@ -784,12 +748,10 @@ input:focus, select:focus {
   margin-bottom: 6px;
   display: flex;
   align-items: center;
->>>>>>> 5ee17350b868d387e92ba30689544037c1b80770
   gap: 8px;
 }
 
 .badge-empresa {
-<<<<<<< HEAD
   display: inline-block;
   background: var(--primary-light);
   color: var(--primary-color);
@@ -910,22 +872,17 @@ input:focus, select:focus {
 
 .table-responsive {
   overflow-x: auto;
->>>>>>> 5ee17350b868d387e92ba30689544037c1b80770
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
-<<<<<<< HEAD
   text-align: left;
-=======
   font-size: 0.88rem;
->>>>>>> 5ee17350b868d387e92ba30689544037c1b80770
 }
 
 th, td {
   padding: 12px 14px;
-<<<<<<< HEAD
   border-bottom: 1px solid var(--border-color);
   font-size: 13px;
 }
@@ -939,13 +896,11 @@ th {
 
 th {
   background: #f8fafc;
->>>>>>> 5ee17350b868d387e92ba30689544037c1b80770
   color: var(--text-dark);
   font-weight: 700;
 }
 
 tr:hover {
-<<<<<<< HEAD
   background-color: #f1f5f9;
 }
 
@@ -1014,7 +969,6 @@ tr:hover {
 @keyframes scaleUp {
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
-=======
   background: #f1f5f9;
 }
 
@@ -1052,12 +1006,10 @@ body.rol-tecnico .mantenimiento-layout {
   box-shadow: var(--shadow-lg);
   position: relative;
   animation: fadeIn 0.3s ease;
->>>>>>> 5ee17350b868d387e92ba30689544037c1b80770
 }
 
 .close-btn {
   position: absolute;
-<<<<<<< HEAD
   top: 16px;
   right: 20px;
   font-size: 24px;
@@ -1146,4 +1098,3 @@ body.rol-tecnico .mantenimiento-layout {
   gap: 10px;
   margin-top: 20px;
 }
->>>>>>> 5ee17350b868d387e92ba30689544037c1b80770
