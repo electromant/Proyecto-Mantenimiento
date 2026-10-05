@@ -1,510 +1,570 @@
-// LISTA COMPLETA DE ESTACIONES DE RECOLECCIÓN Y INFRAESTRUCTURA BARRANCABERMEJA
-const estacionesBarrancabermeja = [
-  { id: 1, nombre: "Refinería de Barrancabermeja (GRB)", lat: 7.0653, lng: -73.8547, sector: "Urbano / Industrial", estado: "Operativo", desc: "Complejo Industrial Principal de Refinación" },
-  { id: 2, nombre: "Estación Galán", lat: 7.0425, lng: -73.8511, sector: "Galán / Rio Magdalena", estado: "Operativo", desc: "Terminal de Transporte y Almacenamiento de Crudos" },
-  { id: 3, nombre: "Estación Campo El Centro - Batería 1", lat: 6.8722, lng: -73.7481, sector: "Corregimiento El Centro", estado: "Operativo", desc: "Estación Central de Recolección Cira Infantas" },
-  { id: 4, nombre: "Estación Batería 2 (La Cira)", lat: 6.8911, lng: -73.7315, sector: "El Centro", estado: "Operativo", desc: "Separación y Deshidratación de Crudo" },
-  { id: 5, nombre: "Estación Batería 3 (Infantas)", lat: 6.8488, lng: -73.7592, sector: "El Centro / Infantas", estado: "Mantenimiento", desc: "Estación de Inyección de Agua y Recolección" },
-  { id: 6, nombre: "Estación El Llanito", lat: 7.1523, lng: -73.8011, sector: "Corregimiento El Llanito", estado: "Operativo", desc: "Recolección de hidrocarburos Norte" },
-  { id: 7, nombre: "Estación Lisama", lat: 6.9458, lng: -73.6521, sector: "Ruta del Cacao / Lisama", estado: "Operativo", desc: "Estación de Bombeo y Compresión de Gas" },
-  { id: 8, nombre: "Estación Casabe", lat: 7.0811, lng: -73.8825, sector: "Margen Izquierda Río Magd.", estado: "Operativo", desc: "Campo Histórico Casabe - Recolección" },
-  { id: 9, nombre: "Estación Cantagallo", lat: 7.3751, lng: -73.9189, sector: "Cantagallo (Sur de Bolívar)", estado: "Operativo", desc: "Planta Deshidratadora de Crudo" },
-  { id: 10, nombre: "Estación Yariguíes / San Vicente", lat: 6.9812, lng: -73.7845, sector: "Sabaneta", estado: "Inspección", desc: "Línea de Transferencia de Gas Petroquímico" },
-  { id: 11, nombre: "Estación Termoyariguíes", lat: 7.0511, lng: -73.8210, sector: "Comuna 6", estado: "Operativo", desc: "Generación Eléctrica para el Complejo" },
-  { id: 12, nombre: "Estación San Silvestre", lat: 7.0911, lng: -73.8155, sector: "Ciénaga San Silvestre", estado: "Operativo", desc: "Captación de Agua Industrial" }
+/* ==========================================================================
+   CONFIGURACIÓN E INICIALIZACIÓN DE SUPABASE
+   ========================================================================== */
+
+const SUPABASE_URL = "https://jseocskipyhkmzatdplx.supabase.co";
+const SUPABASE_KEY = "sb_publishable_DbyAT_qBKj3hDVuBk0zUoQ_sWVAxmXz";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+/* ==========================================================================
+   DATOS INICIALES Y UBICACIONES GEOGRÁFICAS
+   ========================================================================== */
+
+// Variable global para controlar la instancia del mapa Leaflet
+let mapInstance = null;
+
+// Variable global para almacenar el rol activo ("Supervisor" o "Técnico")
+let rolUsuarioActual = localStorage.getItem('user_role') || "Supervisor";
+
+const estacionesUbicaciones = [
+    {
+        nombre: "Campo La Cira Infantas - Estación Cira 1",
+        lat: 6.9531,
+        lng: -73.7485,
+        descripcion: "Estación principal de recolección e inyección."
+    },
+    {
+        nombre: "Estación Barrancabermeja Principal",
+        lat: 7.0653,
+        lng: -73.8547,
+        descripcion: "Centro logístico y de bombeo electromecánico."
+    },
+    {
+        nombre: "Refinería de Barrancabermeja - Unidad 2",
+        lat: 7.0602,
+        lng: -73.8491,
+        descripcion: "Unidad de procesamiento térmico y refinación."
+    },
+    {
+        nombre: "Estación de Bombeo Lisama",
+        lat: 7.0425,
+        lng: -73.5931,
+        descripcion: "Punto de recolección y bombeo del sector Lisama."
+    },
+    {
+        nombre: "Campo Cantagallo - Estación Recolectora",
+        lat: 7.3781,
+        lng: -73.9182,
+        descripcion: "Planta de tratamiento de crudo en área Cantagallo."
+    },
+    {
+        nombre: "Campo Casabe - Estación Central",
+        lat: 7.0518,
+        lng: -73.8825,
+        descripcion: "Supervisión electromecánica e inyección del sector Casabe."
+    },
+    {
+        nombre: "Planta de Gas Tibú",
+        lat: 8.6385,
+        lng: -72.7358,
+        descripcion: "Compresión y tratamiento de gas natural."
+    },
+    {
+        nombre: "Estación Orito - Putumayo",
+        lat: 0.6681,
+        lng: -76.8722,
+        descripcion: "Centro operativo de distribución electromecánica del sur."
+    }
 ];
 
-// Avatares base vectoriales por defecto en SVG
-const avatarMujer = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23004d40'/><circle cx='50' cy='35' r='18' fill='%23ffffff'/><path d='M20 85 C20 60, 80 60, 80 85 Z' fill='%23ffffff'/></svg>";
-const avatarHombre = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23002b49'/><circle cx='50' cy='35' r='18' fill='%23ffffff'/><path d='M20 85 C20 60, 80 60, 80 85 Z' fill='%23ffffff'/></svg>";
-
-// ESTADO GLOBAL CON LOS 4 TÉCNICOS PREDEFINIDOS
-let tecnicos = JSON.parse(localStorage.getItem('tecnicos_data')) || [
-  {
-    nombre: "Ing. Carlos Mendoza",
-    especialidad: "Mantenimiento de Transformadores y Motores AC",
-    edad: 38,
-    empresa: "Ecopetrol - Planta Central",
-    jornada: "Diurna (07:00 - 16:00)",
-    foto: avatarHombre
-  },
-  {
-    nombre: "Ingrid Johana Gómez",
-    especialidad: "Mantenimiento de Bombas Electrosumergibles",
-    edad: 34,
-    empresa: "Ecopetrol - Operaciones",
-    jornada: "Mañana (06:00 AM - 02:00 PM)",
-    foto: avatarMujer
-  },
-  {
-    nombre: "Ing. Fabio Yordith Blanco Maffiold",
-    especialidad: "Operador de Planta",
-    edad: 32,
-    empresa: "Ecopetrol",
-    jornada: "Mañana (06:00 AM - 02:00 PM)",
-    foto: avatarHombre
-  },
-  {
-    nombre: "Ing. Harold Santiago Abaunza Quecho",
-    especialidad: "Programador de PLC's",
-    edad: 28,
-    empresa: "Ecopetrol",
-    jornada: "Diurna (07:00 - 16:00)",
-    foto: avatarHombre
-  }
+let listaTecnicos = JSON.parse(localStorage.getItem('tecnicos_data')) || [
+    {
+        id: 1,
+        nombre: "Ing. Fabio Blanco",
+        especialidad: "Especialista Electromecánico",
+        correo: "maffiold94@gmail.com",
+        telefono: "+57 312 456 7890",
+        empresa: "ECOPETROL S.A.",
+        foto: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150"
+    },
+    {
+        id: 2,
+        nombre: "Ing. Harold Abaunzaque",
+        especialidad: "Supervisor de Mantenimiento",
+        correo: "harold.abaunzaque@unipaz.edu.co",
+        telefono: "+57 310 987 6543",
+        empresa: "UNIPAZ",
+        foto: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150"
+    }
 ];
 
-let mantenimientos = JSON.parse(localStorage.getItem('mantenimientos_data')) || [];
-let mapa = null;
-let marcadorUsuario = null;
+let listaOrdenes = JSON.parse(localStorage.getItem('ordenes_data')) || [
+    {
+        id: "ORD-101",
+        estacion: "Campo La Cira Infantas - Estación Cira 1",
+        tipo: "Correctivo",
+        jornada: "Diurna (07:00 AM - 04:00 PM)",
+        fecha: "2026-10-14",
+        hora: "09:10",
+        tecnico: "Ing. Fabio Blanco",
+        correo: "maffiold94@gmail.com"
+    }
+];
 
-// Inicialización de la aplicación
-document.addEventListener('DOMContentLoaded', () => {
-  inicializarMapa();
-  cargarSelectEstaciones();
-  renderizarTecnicos();
-  cargarSelectTecnicos();
-  renderizarMantenimientos();
+document.addEventListener("DOMContentLoaded", () => {
+    cargarSelectTecnicos();
+    renderizarTecnicos(listaTecnicos);
+    renderizarOrdenes();
+    aplicarPermisosPorRol();
 });
 
-function guardarEstadoLocal() {
-  localStorage.setItem('tecnicos_data', JSON.stringify(tecnicos));
-  localStorage.setItem('mantenimientos_data', JSON.stringify(mantenimientos));
-}
+/* ==========================================================================
+   INICIALIZACIÓN DEL MAPA LEAFLET
+   ========================================================================== */
 
-// Navegación de pestañas con ajuste de mapa
-function cambiarPestana(pestanaNombre) {
-  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-
-  if (window.event && window.event.currentTarget) {
-    window.event.currentTarget.classList.add('active');
-  }
-  
-  const targetTab = document.getElementById(`tab-${pestanaNombre}`);
-  if (targetTab) targetTab.classList.add('active');
-
-  if (pestanaNombre === 'mapa') {
-    if (!mapa) {
-      inicializarMapa();
-    } else {
-      setTimeout(() => mapa.invalidateSize(), 250);
-    }
-  }
-}
-
-// Inicializar Mapa con todas las estaciones de Barrancabermeja
 function inicializarMapa() {
-  if (mapa) return;
+    const mapDiv = document.getElementById('map');
+    if (!mapDiv) return;
 
-  // Centrado en Barrancabermeja
-  mapa = L.map('mapaEstaciones').setView([7.0350, -73.8100], 11);
-
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap | Ecopetrol - UNIPAZ'
-  }).addTo(mapa);
-
-  // Agregar marcador por cada estación
-  estacionesBarrancabermeja.forEach(e => {
-    const popupContent = `
-      <div style="font-family: sans-serif; min-width:180px;">
-        <h4 style="margin:0 0 5px; color:#004d40;">${e.nombre}</h4>
-        <p style="margin:2px 0; font-size:12px;"><b>Sector:</b> ${e.sector}</p>
-        <p style="margin:2px 0; font-size:12px;"><b>Estado:</b> <span style="color:${e.estado === 'Operativo' ? 'green' : 'orange'}; font-weight:bold;">${e.estado}</span></p>
-        <p style="margin:5px 0; font-size:11px; color:#555;">${e.desc}</p>
-        <button onclick="agendarEstacionDirecto('${e.nombre}')" style="margin-top:5px; background:#004d40; color:white; border:none; padding:5px 10px; border-radius:3px; font-size:11px; cursor:pointer; width:100%;">📅 Programar Mantenimiento</button>
-      </div>
-    `;
-
-    L.marker([e.lat, e.lng])
-      .addTo(mapa)
-      .bindPopup(popupContent);
-  });
-
-  setTimeout(() => {
-    mapa.invalidateSize();
-  }, 300);
-}
-
-// Función GPS / Ubicación del celular en tiempo real
-function obtenerUbicacionGPS() {
-  if (!navigator.geolocation) {
-    alert("Tu dispositivo o navegador no soporta la función de localización GPS.");
-    return;
-  }
-
-  navigator.geolocation.getCurrentPosition(
-    (posicion) => {
-      const lat = posicion.coords.latitude;
-      const lng = posicion.coords.longitude;
-
-      if (marcadorUsuario) {
-        mapa.removeLayer(marcadorUsuario);
-      }
-
-      mapa.setView([lat, lng], 15);
-
-      marcadorUsuario = L.circleMarker([lat, lng], {
-        color: '#0288d1',
-        fillColor: '#03a9f4',
-        fillOpacity: 0.9,
-        radius: 10
-      }).addTo(mapa)
-        .bindPopup("<b>📍 Tu Ubicación Actual (GPS)</b>")
-        .openPopup();
-    },
-    (error) => {
-      alert("No se pudo acceder a tu ubicación GPS. Asegúrate de activar el GPS del celular y dar permisos al navegador.");
-    },
-    { enableHighAccuracy: true }
-  );
-}
-
-// Llenar el select del formulario con las estaciones reales
-function cargarSelectEstaciones() {
-  const select = document.getElementById('equipo');
-  if (!select) return;
-  select.innerHTML = '<option value="">-- Seleccionar Estación / Equipo --</option>';
-
-  estacionesBarrancabermeja.forEach(e => {
-    const option = document.createElement('option');
-    option.value = `${e.nombre} (${e.sector})`;
-    option.textContent = `${e.nombre} - ${e.sector}`;
-    select.appendChild(option);
-  });
-}
-
-// Acceso directo a programar desde el marcador del mapa
-function agendarEstacionDirecto(nombreEstacion) {
-  cambiarPestana('agendamiento');
-  const selectEquipo = document.getElementById('equipo');
-  
-  for (let i = 0; i < selectEquipo.options.length; i++) {
-    if (selectEquipo.options[i].text.includes(nombreEstacion)) {
-      selectEquipo.selectedIndex = i;
-      break;
+    if (mapInstance !== null) {
+        mapInstance.invalidateSize();
+        return;
     }
-  }
+
+    mapInstance = L.map('map').setView([7.0620, -73.8500], 11);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(mapInstance);
+
+    estacionesUbicaciones.forEach(est => {
+        const marker = L.marker([est.lat, est.lng]).addTo(mapInstance);
+        marker.bindPopup(`
+            <div style="font-family: Arial, sans-serif; text-align: center;">
+                <h4 style="margin: 0 0 5px; color: #004d40;"><i class="fa-solid fa-industry"></i> ${est.nombre}</h4>
+                <p style="margin: 0; font-size: 12px; color: #555;">${est.descripcion}</p>
+            </div>
+        `);
+    });
 }
 
-// Procesar y comprimir la foto del técnico
-function procesarFotoArchivo(event) {
-  const archivo = event.target.files[0];
-  if (!archivo) return;
+/* ==========================================================================
+   INGRESO, SALIDA Y ROLES
+   ========================================================================== */
 
-  const lector = new FileReader();
+function ejecutarIngresoDirecto() {
+    const email = document.getElementById("loginEmail").value || "harold.abaunzaque@unipaz.edu.co";
+    const role = document.getElementById("loginRole").value || "Supervisor";
 
-  lector.onload = function(e) {
-    const img = new Image();
-    img.src = e.target.result;
+    rolUsuarioActual = role;
+    localStorage.setItem('user_role', role);
 
-    img.onload = function() {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      
-      const maxDimension = 300;
-      let width = img.width;
-      let height = img.height;
+    const badge = document.getElementById("userBadgeRole");
+    if (badge) {
+        badge.textContent = `Rol: ${role} (${email})`;
+    }
 
-      if (width > height) {
-        if (width > maxDimension) {
-          height *= maxDimension / width;
-          width = maxDimension;
-        }
-      } else {
-        if (height > maxDimension) {
-          width *= maxDimension / height;
-          height = maxDimension;
-        }
-      }
+    const overlay = document.getElementById("loginOverlay");
+    if (overlay) {
+        overlay.style.display = "none";
+    }
 
-      canvas.width = width;
-      canvas.height = height;
+    document.body.classList.remove("not-logged-in");
 
-      ctx.drawImage(img, 0, 0, width, height);
-      const fotoComprimida = canvas.toDataURL('image/jpeg', 0.8);
+    // Aplicar restricciones de lectura/escritura según el rol seleccionado
+    aplicarPermisosPorRol();
 
-      document.getElementById('tecFoto').value = fotoComprimida;
-
-      const imgPreview = document.getElementById('previewFotoTecnico');
-      imgPreview.src = fotoComprimida;
-      imgPreview.style.display = 'block';
-
-      document.getElementById('btnEliminarFoto').style.display = 'inline-block';
-    };
-  };
-
-  lector.readAsDataURL(archivo);
+    if (window.Swal) {
+        Swal.fire({
+            title: '¡Bienvenido!',
+            text: `Sesión iniciada como ${role}`,
+            icon: 'success',
+            timer: 1200,
+            showConfirmButton: false
+        });
+    }
 }
 
-function eliminarFotoTecnico() {
-  document.getElementById('tecFoto').value = '';
-  document.getElementById('archivoFoto').value = '';
+function aplicarPermisosPorRol() {
+    // 1. Ocultar o mostrar formulario de creación de órdenes
+    const formCard = document.querySelector("#tab-ordenes .card:first-child");
+    if (formCard) {
+        formCard.style.display = (rolUsuarioActual === "Técnico") ? "none" : "block";
+    }
 
-  const imgPreview = document.getElementById('previewFotoTecnico');
-  if (imgPreview) {
-    imgPreview.src = '';
-    imgPreview.style.display = 'none';
-  }
+    // 2. Ocultar o mostrar botón de registrar nuevo técnico
+    const btnRegistrarTec = document.querySelector("button[onclick='abrirModalTecnico()']");
+    if (btnRegistrarTec) {
+        btnRegistrarTec.style.display = (rolUsuarioActual === "Técnico") ? "none" : "inline-block";
+    }
 
-  const btnEliminar = document.getElementById('btnEliminarFoto');
-  if (btnEliminar) btnEliminar.style.display = 'none';
+    // 3. Volver a renderizar tablas y tarjetas para actualizar visibilidad de botones
+    renderizarTecnicos(listaTecnicos);
+    renderizarOrdenes();
 }
 
-// Renderizado de técnicos en pantalla
-function renderizarTecnicos() {
-  const grid = document.getElementById('gridTecnicos');
-  if (!grid) return;
-  grid.innerHTML = '';
-
-  tecnicos.forEach((t, index) => {
-    const fotoUrl = t.foto || avatarHombre;
-    
-    const card = document.createElement('div');
-    card.className = 'card-tecnico';
-    card.innerHTML = `
-      <div class="acciones-tecnico">
-        <button class="btn-icon" onclick="editarTecnico(${index})">✏️</button>
-        <button class="btn-icon" onclick="eliminarTecnico(${index})">🗑️</button>
-      </div>
-      <img src="${fotoUrl}" alt="${t.nombre}">
-      <h3 style="margin:5px 0; font-size:16px;">${t.nombre}</h3>
-      <p style="font-size:12px; color:#666; margin:3px 0;"><b>Especialidad:</b> ${t.especialidad}</p>
-      <p style="font-size:12px; color:#666; margin:3px 0;"><b>Edad:</b> ${t.edad} años</p>
-      <span style="display:inline-block; background:#e0f2f1; color:#004d40; font-size:11px; padding:3px 8px; border-radius:12px; font-weight:bold; margin-top:5px;">
-        ${t.empresa}
-      </span>
-      <p style="font-size:11px; color:#888; margin-top:5px;">⏱️ ${t.jornada}</p>
-      <button onclick="verCuadroHorarios(${index})" style="width:100%; margin-top:10px; background:var(--secondary-color); color:white; border:none; padding:8px; border-radius:4px; font-size:12px; cursor:pointer;">
-        📅 Ver Cuadro de Horarios
-      </button>
-    `;
-    grid.appendChild(card);
-  });
+function cerrarSesion() {
+    if (window.Swal) {
+        Swal.fire({
+            title: '¿Cerrar Sesión?',
+            text: "Saldrás del sistema de gestión.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#004d40',
+            cancelButtonColor: '#d32f2f',
+            confirmButtonText: 'Sí, salir',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const overlay = document.getElementById("loginOverlay");
+                if (overlay) overlay.style.display = "flex";
+                document.body.classList.add("not-logged-in");
+            }
+        });
+    } else {
+        const overlay = document.getElementById("loginOverlay");
+        if (overlay) overlay.style.display = "flex";
+        document.body.classList.add("not-logged-in");
+    }
 }
+
+/* ==========================================================================
+   NAVEGACIÓN TAB Y CARGA DE MAPA
+   ========================================================================== */
+
+function cambiarTab(tabName, element) {
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+
+    const activeTab = document.getElementById(`tab-${tabName}`);
+    if (activeTab) activeTab.classList.add('active');
+    if (element) element.classList.add('active');
+
+    if (tabName === 'mapa') {
+        setTimeout(() => {
+            if (mapInstance === null) {
+                inicializarMapa();
+            } else {
+                mapInstance.invalidateSize();
+            }
+        }, 200);
+    }
+}
+
+/* ==========================================================================
+   GESTIÓN Y ENVÍO DE ÓRDENES (EMAILJS)
+   ========================================================================== */
 
 function cargarSelectTecnicos() {
-  const select = document.getElementById('tecnico');
-  if (!select) return;
-  select.innerHTML = '<option value="">-- Seleccionar Técnico --</option>';
-
-  tecnicos.forEach(t => {
-    const opt = document.createElement('option');
-    opt.value = t.nombre;
-    opt.textContent = `${t.nombre} (${t.empresa})`;
-    select.appendChild(opt);
-  });
-}
-
-// Modal Técnico CRUD
-function abrirModalFormTecnico() {
-  document.getElementById('formTecnico').reset();
-  document.getElementById('tecIndex').value = '';
-  document.getElementById('tituloModalTecnico').textContent = 'Agregar Nuevo Técnico';
-  eliminarFotoTecnico();
-  document.getElementById('modalFormTecnico').style.display = 'block';
-}
-
-function cerrarModalFormTecnico() {
-  document.getElementById('modalFormTecnico').style.display = 'none';
-}
-
-function guardarTecnico(e) {
-  e.preventDefault();
-  const index = document.getElementById('tecIndex').value;
-
-  const nuevoTecnico = {
-    nombre: document.getElementById('tecNombre').value,
-    especialidad: document.getElementById('tecEspecialidad').value,
-    edad: document.getElementById('tecEdad').value,
-    empresa: document.getElementById('tecEmpresa').value,
-    jornada: document.getElementById('tecJornada').value,
-    foto: document.getElementById('tecFoto').value || avatarHombre
-  };
-
-  if (index === '') {
-    tecnicos.push(nuevoTecnico);
-  } else {
-    tecnicos[index] = nuevoTecnico;
-  }
-
-  guardarEstadoLocal();
-  renderizarTecnicos();
-  cargarSelectTecnicos();
-  cerrarModalFormTecnico();
-}
-
-function editarTecnico(index) {
-  const t = tecnicos[index];
-  document.getElementById('tecIndex').value = index;
-  document.getElementById('tecNombre').value = t.nombre;
-  document.getElementById('tecEspecialidad').value = t.especialidad;
-  document.getElementById('tecEdad').value = t.edad;
-  document.getElementById('tecEmpresa').value = t.empresa;
-  document.getElementById('tecJornada').value = t.jornada;
-  
-  if (t.foto) {
-    document.getElementById('tecFoto').value = t.foto;
-    const imgPreview = document.getElementById('previewFotoTecnico');
-    imgPreview.src = t.foto;
-    imgPreview.style.display = 'block';
-    document.getElementById('btnEliminarFoto').style.display = 'inline-block';
-  } else {
-    eliminarFotoTecnico();
-  }
-
-  document.getElementById('tituloModalTecnico').textContent = 'Editar Técnico';
-  document.getElementById('modalFormTecnico').style.display = 'block';
-}
-
-function eliminarTecnico(index) {
-  if (confirm(`¿Estás seguro de eliminar a ${tecnicos[index].nombre}?`)) {
-    tecnicos.splice(index, 1);
-    guardarEstadoLocal();
-    renderizarTecnicos();
-    cargarSelectTecnicos();
-  }
-}
-
-// Mantenimientos CRUD
-function guardarMantenimiento(e) {
-  e.preventDefault();
-  const id = document.getElementById('mantenimientoId').value;
-
-  const item = {
-    id: id ? id : Date.now().toString(),
-    equipo: document.getElementById('equipo').value,
-    tipo: document.getElementById('tipo').value,
-    jornada: document.getElementById('jornada').value,
-    fecha: document.getElementById('fecha').value,
-    hora: document.getElementById('hora').value,
-    tecnico: document.getElementById('tecnico').value
-  };
-
-  if (id) {
-    const idx = mantenimientos.findIndex(m => m.id === id);
-    if (idx !== -1) mantenimientos[idx] = item;
-  } else {
-    mantenimientos.push(item);
-  }
-
-  guardarEstadoLocal();
-  renderizarMantenimientos();
-  cancelarEdicionMantenimiento();
-}
-
-function renderizarMantenimientos() {
-  const tbody = document.getElementById('tablaMantenimientos');
-  if (!tbody) return;
-  const filtro = document.getElementById('filtroTipo').value;
-  tbody.innerHTML = '';
-
-  const listaFiltrada = filtro === 'TODOS' ? mantenimientos : mantenimientos.filter(m => m.tipo === filtro);
-
-  if (listaFiltrada.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#888;">No hay mantenimientos agendados en el sistema.</td></tr>';
-    return;
-  }
-
-  listaFiltrada.forEach(m => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${m.equipo}</td>
-      <td><b>${m.tipo}</b></td>
-      <td>${m.jornada}</td>
-      <td>${m.fecha}</td>
-      <td>${m.hora}</td>
-      <td>${m.tecnico}</td>
-      <td>
-        <button class="btn-icon" onclick="editarMantenimiento('${m.id}')">✏️</button>
-        <button class="btn-icon" onclick="eliminarMantenimiento('${m.id}')">🗑️</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-function editarMantenimiento(id) {
-  const m = mantenimientos.find(item => item.id === id);
-  if (!m) return;
-
-  document.getElementById('mantenimientoId').value = m.id;
-  document.getElementById('equipo').value = m.equipo;
-  document.getElementById('tipo').value = m.tipo;
-  document.getElementById('jornada').value = m.jornada;
-  document.getElementById('fecha').value = m.fecha;
-  document.getElementById('hora').value = m.hora;
-  document.getElementById('tecnico').value = m.tecnico;
-
-  document.getElementById('tituloFormulario').textContent = 'Editar Mantenimiento';
-  document.getElementById('btnGuardar').textContent = 'Actualizar Mantenimiento';
-  document.getElementById('btnCancelar').style.display = 'inline-block';
-}
-
-function cancelarEdicionMantenimiento() {
-  document.getElementById('formularioMantenimiento').reset();
-  document.getElementById('mantenimientoId').value = '';
-  document.getElementById('tituloFormulario').textContent = 'Programar Nuevo Mantenimiento';
-  document.getElementById('btnGuardar').textContent = 'Guardar Mantenimiento';
-  document.getElementById('btnCancelar').style.display = 'none';
-}
-
-function eliminarMantenimiento(id) {
-  if (confirm('¿Eliminar este mantenimiento programado?')) {
-    mantenimientos = mantenimientos.filter(m => m.id !== id);
-    guardarEstadoLocal();
-    renderizarMantenimientos();
-  }
-}
-
-// Modal Ver Horario Técnico
-function verCuadroHorarios(index) {
-  const t = tecnicos[index];
-  const modalHeader = document.getElementById('modalHeader');
-  const modalContent = document.getElementById('modalHorarioContent');
-
-  modalHeader.innerHTML = `
-    <img src="${t.foto || avatarHombre}" style="width:60px; height:60px; border-radius:50%; object-fit:cover;">
-    <div>
-      <h3 style="margin:0; color:var(--primary-color);">${t.nombre}</h3>
-      <p style="margin:2px 0; font-size:12px; color:#555;">${t.especialidad} - <b>${t.empresa}</b></p>
-    </div>
-  `;
-
-  const trabajosAsignados = mantenimientos.filter(m => m.tecnico === t.nombre);
-
-  if (trabajosAsignados.length === 0) {
-    modalContent.innerHTML = '<p style="text-align:center; color:#777; padding:15px;">Este técnico no tiene mantenimientos asignados actualmente.</p>';
-  } else {
-    let tablaHTML = `
-      <table>
-        <thead>
-          <tr>
-            <th>Equipo</th>
-            <th>Tipo</th>
-            <th>Fecha</th>
-            <th>Hora</th>
-          </tr>
-        </thead>
-        <tbody>
-    `;
-    trabajosAsignados.forEach(trabajo => {
-      tablaHTML += `
-        <tr>
-          <td>${trabajo.equipo}</td>
-          <td>${trabajo.tipo}</td>
-          <td>${trabajo.fecha}</td>
-          <td>${trabajo.hora}</td>
-        </tr>
-      `;
+    const select = document.getElementById("ordenTecnico");
+    if (!select) return;
+    
+    select.innerHTML = '<option value="">-- Seleccionar Técnico --</option>';
+    
+    listaTecnicos.forEach(t => {
+        const option = document.createElement("option");
+        option.value = t.nombre;
+        option.dataset.correo = t.correo;
+        option.textContent = `${t.nombre} (${t.empresa})`;
+        select.appendChild(option);
     });
-    tablaHTML += '</tbody></table>';
-    modalContent.innerHTML = tablaHTML;
-  }
+}
 
-  document.getElementById('modalTecnico').style.display = 'block';
+function guardarOrden(e) {
+    e.preventDefault();
+
+    if (rolUsuarioActual === "Técnico") {
+        Swal.fire('Acceso denegado', 'El rol Técnico solo tiene permisos de lectura.', 'error');
+        return;
+    }
+
+    const selectTec = document.getElementById("ordenTecnico");
+    const optionSel = selectTec.options[selectTec.selectedIndex];
+    const correoTecnico = optionSel.dataset.correo || "";
+
+    const nuevaOrden = {
+        id: "ORD-" + Math.floor(100 + Math.random() * 900),
+        estacion: document.getElementById("ordenEstacion").value,
+        tipo: document.getElementById("ordenTipo").value,
+        jornada: document.getElementById("ordenJornada").value,
+        fecha: document.getElementById("ordenFecha").value,
+        hora: document.getElementById("ordenHora").value,
+        tecnico: selectTec.value,
+        correo: correoTecnico
+    };
+
+    listaOrdenes.unshift(nuevaOrden);
+    localStorage.setItem('ordenes_data', JSON.stringify(listaOrdenes));
+
+    renderizarOrdenes();
+    document.getElementById("formOrden").reset();
+
+    enviarNotificacionEmail(nuevaOrden);
+}
+
+function renderizarOrdenes() {
+    const tbody = document.getElementById("tablaOrdenesBody");
+    if (!tbody) return;
+
+    const filtro = document.getElementById("filtroTipo") ? document.getElementById("filtroTipo").value : "Todos";
+    tbody.innerHTML = "";
+
+    const ordenesFiltradas = filtro === "Todos" 
+        ? listaOrdenes 
+        : listaOrdenes.filter(o => o.tipo === filtro);
+
+    if (ordenesFiltradas.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color: #888;">No hay órdenes registradas.</td></tr>`;
+        return;
+    }
+
+    const esTecnico = (rolUsuarioActual === "Técnico");
+
+    ordenesFiltradas.forEach(orden => {
+        const tr = document.createElement("tr");
+        
+        // Si el usuario es Técnico, no se muestran botones de acción
+        const botonesAccion = esTecnico 
+            ? `<span style="font-size: 12px; color: #888;">Lectura</span>`
+            : `<button class="btn-action-icon" onclick="reenviarNotificacion('${orden.id}')" title="Reenviar Notificación por Correo">
+                    <i class="fa-solid fa-paper-plane" style="color: #0288d1;"></i>
+               </button>
+               <button class="btn-action-icon delete" onclick="eliminarOrden('${orden.id}')" title="Eliminar Orden">
+                    <i class="fa-solid fa-trash-can"></i>
+               </button>`;
+
+        tr.innerHTML = `
+            <td><strong>${orden.estacion}</strong></td>
+            <td><span class="badge-tipo ${orden.tipo.toLowerCase()}">${orden.tipo}</span></td>
+            <td>${orden.jornada}</td>
+            <td>${orden.fecha}</td>
+            <td>${orden.hora}</td>
+            <td>${orden.tecnico}</td>
+            <td>${orden.correo}</td>
+            <td>${botonesAccion}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function reenviarNotificacion(idOrden) {
+    if (rolUsuarioActual === "Técnico") return;
+    const orden = listaOrdenes.find(o => o.id === idOrden);
+    if (orden) {
+        enviarNotificacionEmail(orden);
+    }
+}
+
+function eliminarOrden(idOrden) {
+    if (rolUsuarioActual === "Técnico") return;
+
+    Swal.fire({
+        title: '¿Eliminar orden?',
+        text: "Esta acción no se puede deshacer.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d32f2f',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sí, eliminar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            listaOrdenes = listaOrdenes.filter(o => o.id !== idOrden);
+            localStorage.setItem('ordenes_data', JSON.stringify(listaOrdenes));
+            renderizarOrdenes();
+            Swal.fire('Eliminado', 'La orden ha sido removida.', 'success');
+        }
+    });
+}
+
+function enviarNotificacionEmail(orden) {
+    Swal.fire({
+        title: 'Enviando notificación...',
+        text: 'Por favor espera un momento.',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    const templateParams = {
+        to_email: orden.correo,
+        tecnico_nombre: orden.tecnico,
+        equipo_estacion: orden.estacion,
+        tipo_mantenimiento: orden.tipo,
+        jornada_trabajo: orden.jornada,
+        fecha_mantenimiento: orden.fecha,
+        hora_mantenimiento: orden.hora
+    };
+
+    emailjs.send("service_nzn02hp", "template_uadyeyr", templateParams)
+        .then(function(response) {
+            console.log("NOTIFICACIÓN ENVIADA ÉXITO", response.status, response.text);
+            Swal.fire({
+                title: '¡Notificación Enviada!',
+                text: `Se ha enviado el correo a ${orden.correo} correctamente.`,
+                icon: 'success',
+                confirmButtonColor: '#004d40'
+            });
+        }, function(error) {
+            console.error("ERROR EN EMAILJS:", error);
+            Swal.fire({
+                title: 'Error',
+                text: 'No se pudo enviar la notificación. Revisa tus credenciales de EmailJS.',
+                icon: 'error',
+                confirmButtonColor: '#d32f2f'
+            });
+        });
+}
+
+/* ==========================================================================
+   DIRECTORIO DE TÉCNICOS
+   ========================================================================== */
+
+function renderizarTecnicos(lista) {
+    const grid = document.getElementById("gridTecnicos");
+    if (!grid) return;
+    grid.innerHTML = "";
+
+    const esTecnico = (rolUsuarioActual === "Técnico");
+
+    lista.forEach(tec => {
+        const card = document.createElement("div");
+        card.className = "card-tecnico";
+
+        // Muestra los botones de edición solo si es Supervisor
+        const accionesHtml = esTecnico ? '' : `
+            <div class="card-tecnico-actions">
+                <button class="btn-action-icon" onclick="editarTecnico('${tec.id}')" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                <button class="btn-action-icon delete" onclick="eliminarTecnico('${tec.id}')" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
+            </div>
+        `;
+
+        card.innerHTML = `
+            ${accionesHtml}
+            <img src="${tec.foto}" alt="${tec.nombre}" class="tecnico-img" onerror="this.src='https://via.placeholder.com/150'">
+            <h3>${tec.nombre}</h3>
+            <p class="especialidad">${tec.especialidad}</p>
+            <p class="info-item"><i class="fa-solid fa-envelope"></i> ${tec.correo}</p>
+            <p class="info-item"><i class="fa-solid fa-phone"></i> ${tec.telefono}</p>
+            <span class="badge-empresa">${tec.empresa}</span>
+        `;
+        grid.appendChild(card);
+    });
+}
+
+function filtrarTecnicos() {
+    const texto = document.getElementById("buscarTecnico").value.toLowerCase();
+    const filtrados = listaTecnicos.filter(t => 
+        t.nombre.toLowerCase().includes(texto) || 
+        t.especialidad.toLowerCase().includes(texto)
+    );
+    renderizarTecnicos(filtrados);
+}
+
+function abrirModalTecnico() {
+    if (rolUsuarioActual === "Técnico") return;
+    document.getElementById("formTecnico").reset();
+    document.getElementById("tecnicoId").value = "";
+    document.getElementById("modalTecnicoTitulo").innerHTML = '<i class="fa-solid fa-user-plus"></i> Registrar Nuevo Técnico';
+    document.getElementById("imgPreview").src = "https://via.placeholder.com/150";
+    document.getElementById("modalTecnico").style.display = "flex";
 }
 
 function cerrarModalTecnico() {
-  document.getElementById('modalTecnico').style.display = 'none';
+    document.getElementById("modalTecnico").style.display = "none";
+}
+
+function guardarTecnico(e) {
+    e.preventDefault();
+    if (rolUsuarioActual === "Técnico") return;
+
+    const id = document.getElementById("tecnicoId").value;
+    const nombre = document.getElementById("tecNombre").value;
+    const especialidad = document.getElementById("tecEspecialidad").value;
+    const correo = document.getElementById("tecCorreo").value;
+    const telefono = document.getElementById("tecTelefono").value;
+    const empresa = document.getElementById("tecEmpresa").value;
+    let foto = document.getElementById("tecFotoUrl").value || document.getElementById("imgPreview").src;
+
+    if (!foto || foto.includes("placeholder.com")) {
+        foto = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150";
+    }
+
+    if (id) {
+        const index = listaTecnicos.findIndex(t => t.id == id);
+        if (index !== -1) {
+            listaTecnicos[index] = { id: listaTecnicos[index].id, nombre, especialidad, correo, telefono, empresa, foto };
+        }
+    } else {
+        const nuevoTec = {
+            id: Date.now(),
+            nombre,
+            especialidad,
+            correo,
+            telefono,
+            empresa,
+            foto
+        };
+        listaTecnicos.push(nuevoTec);
+    }
+
+    localStorage.setItem('tecnicos_data', JSON.stringify(listaTecnicos));
+    renderizarTecnicos(listaTecnicos);
+    cargarSelectTecnicos();
+    cerrarModalTecnico();
+
+    Swal.fire('Guardado', 'Técnico procesado exitosamente', 'success');
+}
+
+function editarTecnico(id) {
+    if (rolUsuarioActual === "Técnico") return;
+
+    const tec = listaTecnicos.find(t => t.id == id);
+    if (!tec) return;
+
+    document.getElementById("tecnicoId").value = tec.id;
+    document.getElementById("tecNombre").value = tec.nombre;
+    document.getElementById("tecEspecialidad").value = tec.especialidad;
+    document.getElementById("tecCorreo").value = tec.correo;
+    document.getElementById("tecTelefono").value = tec.telefono;
+    document.getElementById("tecEmpresa").value = tec.empresa;
+    document.getElementById("tecFotoUrl").value = tec.foto;
+    document.getElementById("imgPreview").src = tec.foto;
+
+    document.getElementById("modalTecnicoTitulo").innerHTML = '<i class="fa-solid fa-user-pen"></i> Editar Técnico';
+    document.getElementById("modalTecnico").style.display = "flex";
+}
+
+function eliminarTecnico(id) {
+    if (rolUsuarioActual === "Técnico") return;
+
+    Swal.fire({
+        title: '¿Eliminar técnico?',
+        text: "Esta persona ya no aparecerá disponible para asignar en nuevas órdenes.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d32f2f',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            listaTecnicos = listaTecnicos.filter(t => t.id != id);
+            
+            localStorage.setItem('tecnicos_data', JSON.stringify(listaTecnicos));
+            
+            renderizarTecnicos(listaTecnicos);
+            cargarSelectTecnicos();
+
+            Swal.fire('Eliminado', 'El técnico ha sido removido exitosamente.', 'success');
+        }
+    });
+}
+
+function actualizarPreviewFoto() {
+    const url = document.getElementById("tecFotoUrl").value;
+    if (url) {
+        document.getElementById("imgPreview").src = url;
+    }
+}
+
+function cargarFotoLocal(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById("imgPreview").src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
 }
