@@ -4,7 +4,7 @@
 
 const SUPABASE_URL = "https://jseocskipyhkmzatdplx.supabase.co";
 const SUPABASE_KEY = "sb_publishable_DbyAT_qBKj3hDVuBk0zUoQ_sWVAxmXz";
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 /* ==========================================================================
    DATOS INICIALES Y UBICACIONES GEOGRÁFICAS
