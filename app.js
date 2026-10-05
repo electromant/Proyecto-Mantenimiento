@@ -447,6 +447,27 @@ window.cambiarPestana = window.cambiarTab = function(tabName, element) {
 };
 
 // GESTIÓN Y ENVÍO DE ÓRDENES (EMAILJS)
+// Cargar select de estaciones/ubicaciones en Agendamiento
+function cargarSelectEstaciones() {
+    const select = document.getElementById("ordenEstacion") || document.querySelector("select[name='estacion']");
+    if (!select) return;
+
+    const estaciones = (typeof estacionesUbicaciones !== 'undefined' && estacionesUbicaciones.length > 0) 
+        ? estacionesUbicaciones 
+        : [
+            { nombre: "Campo La Cira Infantas - Estación Cira 1" },
+            { nombre: "Estación Barrancabermeja Principal" }
+        ];
+
+    select.innerHTML = '<option value="">-- Seleccione Ubicación --</option>';
+
+    estaciones.forEach(e => {
+        const option = document.createElement("option");
+        option.value = e.nombre;
+        option.textContent = e.nombre;
+        select.appendChild(option);
+    });
+}
    
 function cargarSelectTecnicos() {
     const select = document.getElementById("ordenTecnico");
@@ -802,3 +823,9 @@ window.editarTecnico = function(id) {
     if (typeof renderizarTecnicos === 'function') renderizarTecnicos();
     if (typeof cargarSelectTecnicos === 'function') cargarSelectTecnicos();
 };
+
+document.addEventListener('DOMContentLoaded', () => {
+    cargarSelectEstaciones();
+    cargarSelectTecnicos();
+    if (typeof renderizarTecnicos === 'function') renderizarTecnicos();
+});
