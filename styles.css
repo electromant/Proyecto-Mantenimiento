@@ -684,7 +684,7 @@ input:focus, select:focus {
 .grid-tecnicos {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
->>>>>>> 5ee17350b868d387e92ba30689544037c1b80770
+
   gap: 20px;
 }
 
