@@ -105,10 +105,8 @@ document.addEventListener("DOMContentLoaded", () => {
     aplicarPermisosPorRol();
 });
 
-/* 
-   INICIALIZACIÓN DEL MAPA LEAFLET
+// INICIALIZACIÓN DEL MAPA LEAFLET
    
-
 function inicializarMapa() {
     const mapDiv = document.getElementById('map');
     if (!mapDiv) return;
