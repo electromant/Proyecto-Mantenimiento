@@ -1,12 +1,11 @@
-/* CONFIGURACIÓN E INICIALIZACIÓN DE SUPABASE */
-
+// CONFIGURACIÓN E INICIALIZACIÓN DE SUPABASE
 const SUPABASE_URL = "https://jseocskipyhkmzatdplx.supabase.co";
 const SUPABASE_KEY = "sb_publishable_DbyAT_qBKj3hDVuBk0zUoQ_sWVAxMx2";
+
 window.supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 var supabase = window.supabaseClient;
-/* 
-   DATOS INICIALES Y UBICACIONES GEOGRÁFICAS
-   
+
+// DATOS INICIALES Y UBICACIONES GEOGRÁFICAS
 
 // Variable global para controlar la instancia del mapa Leaflet
 let mapInstance = null;
