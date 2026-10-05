@@ -215,31 +215,44 @@ function cerrarSesion() {
 // NAVEGACIÓN TAB Y CARGA DE MAPA
    
 window.cambiarPestana = window.cambiarTab = function(tabName, element) {
-    // Ocultar todos los contenidos
-    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-    
-    // Desactivar todos los botones de navegacion
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    // 1. Ocultar todos los contenidos de pestaña
+    const tabs = document.querySelectorAll('.tab-content');
+    tabs.forEach(tab => tab.classList.remove('active'));
 
-    // Normalizar nombre para el tab de tecnicos/directorio
+    // 2. Desactivar todos los botones
+    const buttons = document.querySelectorAll('.tab-btn');
+    buttons.forEach(btn => btn.classList.remove('active'));
+
+    // 3. Mapear posibles nombres de ID según lo que venga en tabName
     let targetId = tabName;
     if (tabName === 'tecnicos') targetId = 'directorio';
 
-    // Buscar el elemento contenedor correspondiente
-    const activeTab = document.getElementById(`tab-${targetId}`) || 
-                      document.getElementById(`tab-${tabName}`) || 
-                      document.getElementById(targetId);
+    // Intentar buscar el elemento por distintas variantes de ID habituales
+    let activeTab = document.getElementById(`tab-${targetId}`) || 
+                    document.getElementById(`tab-${tabName}`) || 
+                    document.getElementById(targetId) || 
+                    document.getElementById(tabName) ||
+                    document.getElementById('tab-agendamiento'); // Respaldo para agendamiento
 
-    if (activeTab) activeTab.classList.add('active');
+    // Si no encontró nada, tomamos la pestaña por índice para evitar pantalla blanca
+    if (!activeTab && tabs.length > 0) {
+        if (tabName === 'agendamiento') activeTab = tabs[0];
+        else if (tabName === 'mapa') activeTab = tabs[1];
+        else if (tabName === 'tecnicos' || tabName === 'directorio') activeTab = tabs[2];
+    }
 
-    // Activar el boton presionado
+    if (activeTab) {
+        activeTab.classList.add('active');
+    }
+
+    // 4. Marcar el botón activo
     if (element) {
         element.classList.add('active');
     } else if (window.event && window.event.currentTarget) {
         window.event.currentTarget.classList.add('active');
     }
 
-    // Reajustar el mapa Leaflet si se selecciona la pestaña de mapa
+    // 5. Si la pestaña es el mapa, forzar inicialización / redimensionamiento
     if (tabName === 'mapa') {
         setTimeout(() => {
             if (typeof inicializarMapa === 'function' && mapInstance === null) {
