@@ -1,12 +1,9 @@
-/* 
-   CONFIGURACIÓN E INICIALIZACIÓN DE SUPABASE
-   
+/* CONFIGURACIÓN E INICIALIZACIÓN DE SUPABASE */
 
 const SUPABASE_URL = "https://jseocskipyhkmzatdplx.supabase.co";
-const SUPABASE_KEY = "sb_publishable_DbyAT_qBKj3hDVuBk0zUoQ_sWVAxmXz";
+const SUPABASE_KEY = "sb_publishable_DbyAT_qBKj3hDVuBk0zUoQ_sWVAxMx2";
 window.supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 var supabase = window.supabaseClient;
-
 /* 
    DATOS INICIALES Y UBICACIONES GEOGRÁFICAS
    
@@ -139,11 +136,10 @@ function inicializarMapa() {
     });
 }
 
-/* 
-   INGRESO, SALIDA Y ROLES
+// INGRESO, SALIDA Y ROLES
    
 
-function ejecutarIngresoDirecto() {
+window.ejecutarIngresoDirecto = function() {
     const email = document.getElementById("loginEmail").value || "harold.abaunzaque@unipaz.edu.co";
     const role = document.getElementById("loginRole").value || "Supervisor";
 
