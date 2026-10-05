@@ -105,26 +105,29 @@ document.addEventListener("DOMContentLoaded", () => {
     aplicarPermisosPorRol();
 });
 
-// INICIALIZACIÓN DEL MAPA LEAFLET
-   
-function inicializarMapa() {
-    // Buscar mapaLeaflet (el ID exacto de tu HTML) o map como respaldo
+// ==========================================
+// 1. INICIALIZACIÓN DEL MAPA LEAFLET
+// ==========================================
+let mapInstance = null;
+
+window.inicializarMapa = function() {
     const mapDiv = document.getElementById('mapaLeaflet') || document.getElementById('map');
     if (!mapDiv) return;
 
+    // Si ya existe la instancia, solo forzamos que recalcule el tamaño del contenedor
     if (mapInstance !== null) {
-        mapInstance.invalidateSize();
+        setTimeout(() => { mapInstance.invalidateSize(); }, 200);
         return;
     }
 
-    // Inicializar mapa en el elemento encontrado
+    // Crear mapa centrado en las coordenadas principales
     mapInstance = L.map(mapDiv.id).setView([7.0653, -73.8547], 11);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors'
     }).addTo(mapInstance);
 
-    // Dibujar marcadores usando tu arreglo estacionesUbicaciones
+    // Dibujar marcadores
     if (typeof estacionesUbicaciones !== 'undefined' && Array.isArray(estacionesUbicaciones)) {
         estacionesUbicaciones.forEach(est => {
             if (est.lat && est.lng) {
@@ -137,8 +140,181 @@ function inicializarMapa() {
 
     setTimeout(() => {
         if (mapInstance) mapInstance.invalidateSize();
-    }, 250);
+    }, 300);
+};
+
+
+// ==========================================
+// 2. GESTIÓN Y CRUD DE TÉCNICOS (LOCALSTORAGE)
+// ==========================================
+
+// Obtener lista o inicializar con el técnico por defecto (Harold)
+function obtenerTecnicos() {
+    let tecnicos = JSON.parse(localStorage.getItem('tecnicos'));
+    if (!tecnicos || tecnicos.length === 0) {
+        tecnicos = [
+            {
+                id: 1,
+                nombre: "Ing. Harold Abaunzaque",
+                cargo: "Supervisor de Mantenimiento",
+                correo: "harold.abaunzaque@unipaz.edu.co",
+                telefono: "+57 310 987 6543",
+                empresa: "UNIPAZ"
+            }
+        ];
+        localStorage.setItem('tecnicos', JSON.stringify(tecnicos));
+    }
+    return tecnicos;
 }
+
+// Renderizar tarjetas de técnicos en el directorio
+window.renderizarTecnicos = function() {
+    const contenedor = document.getElementById('contenedor-tecnicos') || 
+                       document.getElementById('directorioTecnicos') || 
+                       document.getElementById('sec-tecnicos');
+    
+    if (!contenedor) return;
+
+    const tecnicos = obtenerTecnicos();
+
+    // Si existe una cuadrícula/contenedor específico de tarjetas dentro de la sección
+    const grid = contenedor.querySelector('.tecnicos-grid') || contenedor;
+
+    grid.innerHTML = tecnicos.map(tec => `
+        <div class="tecnico-card" style="border: 1px solid #e0e0e0; border-radius: 12px; padding: 20px; margin: 15px 0; background: #fff; position: relative;">
+            <div style="position: absolute; top: 15px; right: 15px; display: flex; gap: 8px;">
+                <button onclick="editarTecnico('${tec.id}')" title="Editar" style="background: none; border: none; cursor: pointer; color: #444;">
+                    <i class="fa-solid fa-pen"></i>
+                </button>
+                <button onclick="eliminarTecnico('${tec.id}')" title="Eliminar" style="background: none; border: none; cursor: pointer; color: #d9534f;">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </div>
+            <div style="text-align: center;">
+                <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(tec.nombre)}&background=0D47A1&color=fff" 
+                     alt="${tec.nombre}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin-bottom: 10px;">
+                <h3 style="margin: 5px 0;">${tec.nombre}</h3>
+                <p style="color: #666; font-size: 14px; margin: 2px 0;">${tec.cargo || 'Técnico'}</p>
+                <p style="color: #888; font-size: 13px; margin: 2px 0;"><i class="fa-solid fa-envelope"></i> ${tec.correo}</p>
+                <p style="color: #888; font-size: 13px; margin: 2px 0;"><i class="fa-solid fa-phone"></i> ${tec.telefono || 'Sin teléfono'}</p>
+                <span style="display: inline-block; background: #e8f5e9; color: #2e7d32; font-size: 12px; padding: 3px 8px; border-radius: 4px; margin-top: 8px;">
+                    ${tec.empresa || 'UNIPAZ'}
+                </span>
+            </div>
+        </div>
+    `).join('');
+};
+
+// Crear nuevo técnico
+window.abrirModalAgregarTecnico = window.agregarTecnico = function() {
+    const nombre = prompt("Nombre completo del técnico:");
+    if (!nombre) return;
+
+    const cargo = prompt("Cargo o especialidad:", "Técnico de Mantenimiento");
+    const correo = prompt("Correo electrónico:");
+    const telefono = prompt("Teléfono de contacto:");
+    const empresa = prompt("Empresa / Institución:", "UNIPAZ");
+
+    const tecnicos = obtenerTecnicos();
+    const nuevoTecnico = {
+        id: Date.now(), // ID único numérico
+        nombre: nombre,
+        cargo: cargo || "Técnico",
+        correo: correo || "",
+        telefono: telefono || "",
+        empresa: empresa || "UNIPAZ"
+    };
+
+    tecnicos.push(nuevoTecnico);
+    localStorage.setItem('tecnicos', JSON.stringify(tecnicos));
+    alert("¡Técnico creado con éxito!");
+
+    renderizarTecnicos();
+    if (typeof cargarSelectTecnicos === 'function') cargarSelectTecnicos();
+};
+
+// Editar técnico (soporta ID numérico y tipo String)
+window.editarTecnico = function(id) {
+    const tecnicos = obtenerTecnicos();
+    // Comparación flexible (==) para ignorar diferencias entre número y string
+    const index = tecnicos.findIndex(t => t.id == id);
+
+    if (index === -1) {
+        alert("Técnico no encontrado.");
+        return;
+    }
+
+    const tec = tecnicos[index];
+    const nuevoNombre = prompt("Editar Nombre:", tec.nombre);
+    if (nuevoNombre === null) return;
+
+    const nuevoCargo = prompt("Editar Cargo/Especialidad:", tec.cargo || "");
+    if (nuevoCargo === null) return;
+
+    const nuevoCorreo = prompt("Editar Correo:", tec.correo || "");
+    if (nuevoCorreo === null) return;
+
+    const nuevoTelefono = prompt("Editar Teléfono:", tec.telefono || "");
+    if (nuevoTelefono === null) return;
+
+    // Actualizar campos
+    tecnicos[index].nombre = nuevoNombre;
+    tecnicos[index].cargo = nuevoCargo;
+    tecnicos[index].correo = nuevoCorreo;
+    tecnicos[index].telefono = nuevoTelefono;
+
+    localStorage.setItem('tecnicos', JSON.stringify(tecnicos));
+    alert("¡Datos del técnico actualizados correctamente!");
+
+    renderizarTecnicos();
+    if (typeof cargarSelectTecnicos === 'function') cargarSelectTecnicos();
+};
+
+// Eliminar técnico
+window.eliminarTecnico = function(id) {
+    if (!confirm("¿Deseas eliminar este técnico del directorio?")) return;
+
+    let tecnicos = obtenerTecnicos();
+    tecnicos = tecnicos.filter(t => t.id != id);
+
+    localStorage.setItem('tecnicos', JSON.stringify(tecnicos));
+    renderizarTecnicos();
+    if (typeof cargarSelectTecnicos === 'function') cargarSelectTecnicos();
+};
+
+
+// ==========================================
+// 3. CAMBIO DE PESTAÑA Y ACTIVACIÓN VISTA
+// ==========================================
+window.cambiarPestana = window.cambiarTab = function(tabName, element) {
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+
+    const targetSection = document.getElementById(`sec-${tabName}`) || document.getElementById(tabName);
+    if (targetSection) {
+        targetSection.classList.add('active');
+    }
+
+    if (element) {
+        element.classList.add('active');
+    } else if (window.event && window.event.currentTarget) {
+        window.event.currentTarget.classList.add('active');
+    }
+
+    // Acciones específicas según la pestaña
+    if (tabName === 'mapa') {
+        setTimeout(() => {
+            inicializarMapa();
+        }, 200);
+    } else if (tabName === 'tecnicos' || tabName === 'directorio') {
+        renderizarTecnicos();
+    }
+};
+
+// Cargar la vista de técnicos e inicialización al cargar el DOM
+document.addEventListener('DOMContentLoaded', () => {
+    renderizarTecnicos();
+});
 
 // INGRESO, SALIDA Y ROLES
    
