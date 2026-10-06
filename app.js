@@ -517,33 +517,34 @@ window.cargarArchivoFotoModal = function(event) {
 };
 
 function guardarOrden(e) {
-    e.preventDefault();
+    if (e) e.preventDefault();
 
     if (rolUsuarioActual === "Técnico") {
-        Swal.fire('Acceso denegado', 'El rol Técnico solo tiene permisos de lectura.', 'error');
+        Swal.fire('Acceso denegado', 'El rol Técnico solo tiene permisos de lectura', 'error');
         return;
     }
 
-    const selectTec = document.getElementById("ordenTecnico");
-    const optionSel = selectTec.options[selectTec.selectedIndex];
-    const correoTecnico = optionSel.dataset.correo || "";
+    const selectTec = document.getElementById("tecnicoSelect");
+    const optionSel = selectTec && selectTec.selectedIndex !== -1 ? selectTec.options[selectTec.selectedIndex] : null;
+    const correoTecnico = optionSel ? (optionSel.dataset.correo || optionSel.getAttribute("data-correo") || "") : "";
 
     const nuevaOrden = {
         id: "ORD-" + Math.floor(100 + Math.random() * 900),
-        estacion: document.getElementById("ordenEstacion").value,
-        tipo: document.getElementById("ordenTipo").value,
-        jornada: document.getElementById("ordenJornada").value,
-        fecha: document.getElementById("ordenFecha").value,
-        hora: document.getElementById("ordenHora").value,
-        tecnico: selectTec.value,
-        correo: correoTecnico
+        estacion: document.getElementById("ordenEstacion") ? document.getElementById("ordenEstacion").value : "",
+        tipo: document.getElementById("ordenTipo") ? document.getElementById("ordenTipo").value : "",
+        jornada: document.getElementById("jornadaSelect") ? document.getElementById("jornadaSelect").value : "",
+        fecha: document.getElementById("fechaOrden") ? document.getElementById("fechaOrden").value : "",
+        hora: document.getElementById("horaOrden") ? document.getElementById("horaOrden").value : "",
+        tecnico: selectTec ? selectTec.value : "",
+        correo: document.getElementById("correoNotificacion") ? document.getElementById("correoNotificacion").value : correoTecnico
     };
 
     listaOrdenes.unshift(nuevaOrden);
     localStorage.setItem('ordenes_data', JSON.stringify(listaOrdenes));
 
     renderizarOrdenes();
-    document.getElementById("formOrden").reset();
+    const formOrden = document.getElementById("formOrden");
+    if (formOrden) formOrden.reset();
 
     enviarNotificacionEmail(nuevaOrden);
 }
