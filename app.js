@@ -451,10 +451,10 @@ window.cambiarPestana = window.cambiarTab = function(tabName, element) {
 // POBLAR DESPLEGABLES (AGENDAMIENTO)
 // ==========================================
 window.cargarSelectEstaciones = function() {
+    // Buscar específicamente el selector dentro del formulario de agendamiento
     const select = document.getElementById("ordenEstacion") || 
-                   document.getElementById("estacion") || 
-                   document.querySelector("select[name='estacion']") ||
-                   document.querySelectorAll("select")[0];
+                   document.querySelector("#sec-agendamiento select") ||
+                   document.querySelector("select[name='estacion']");
 
     if (!select) return;
 
