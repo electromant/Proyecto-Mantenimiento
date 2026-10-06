@@ -447,42 +447,55 @@ window.cambiarPestana = window.cambiarTab = function(tabName, element) {
 };
 
 // GESTIÓN Y ENVÍO DE ÓRDENES (EMAILJS)
-// Cargar select de estaciones/ubicaciones en Agendamiento
-function cargarSelectEstaciones() {
-    const select = document.getElementById("ordenEstacion") || document.querySelector("select[name='estacion']");
+// ==========================================
+// POBLAR DESPLEGABLES (AGENDAMIENTO)
+// ==========================================
+window.cargarSelectEstaciones = function() {
+    const select = document.getElementById("ordenEstacion") || 
+                   document.getElementById("estacion") || 
+                   document.querySelector("select[name='estacion']") ||
+                   document.querySelectorAll("select")[0];
+
     if (!select) return;
 
     const estaciones = (typeof estacionesUbicaciones !== 'undefined' && estacionesUbicaciones.length > 0) 
         ? estacionesUbicaciones 
         : [
             { nombre: "Campo La Cira Infantas - Estación Cira 1" },
-            { nombre: "Estación Barrancabermeja Principal" }
+            { nombre: "Estación Barrancabermeja Principal" },
+            { nombre: "Campus UNIPAZ" }
         ];
 
     select.innerHTML = '<option value="">-- Seleccione Ubicación --</option>';
-
     estaciones.forEach(e => {
         const option = document.createElement("option");
         option.value = e.nombre;
         option.textContent = e.nombre;
         select.appendChild(option);
     });
-}
-   
-function cargarSelectTecnicos() {
-    const select = document.getElementById("ordenTecnico");
+};
+
+window.cargarSelectTecnicos = function() {
+    const select = document.getElementById("ordenTecnico") || 
+                   document.getElementById("tecnico") || 
+                   document.querySelector("select[name='tecnico']") ||
+                   document.querySelectorAll("select")[3];
+
     if (!select) return;
-    
-    select.innerHTML = '<option value="">-- Seleccionar Técnico --</option>';
-    
-    listaTecnicos.forEach(t => {
+
+    const tecnicos = JSON.parse(localStorage.getItem('tecnicos')) || [
+        { id: "1", nombre: "Ing. Harold Abaunzaque", correo: "harold.abaunzaque@unipaz.edu.co" }
+    ];
+
+    select.innerHTML = '<option value="">-- Seleccione Técnico --</option>';
+    tecnicos.forEach(t => {
         const option = document.createElement("option");
         option.value = t.nombre;
-        option.dataset.correo = t.correo;
-        option.textContent = `${t.nombre} (${t.empresa})`;
+        option.dataset.correo = t.correo || "";
+        option.textContent = `${t.nombre} (${t.empresa || 'UNIPAZ'})`;
         select.appendChild(option);
     });
-}
+};
 
 function guardarOrden(e) {
     e.preventDefault();
@@ -829,3 +842,156 @@ document.addEventListener('DOMContentLoaded', () => {
     cargarSelectTecnicos();
     if (typeof renderizarTecnicos === 'function') renderizarTecnicos();
 });
+
+// ==========================================
+// CRUD Y DIRECTORIO DE TÉCNICOS
+// ==========================================
+function obtenerListaTecnicos() {
+    let tecnicos = JSON.parse(localStorage.getItem('tecnicos'));
+    if (!tecnicos || tecnicos.length === 0) {
+        tecnicos = [
+            {
+                id: "1",
+                nombre: "Ing. Harold Abaunzaque",
+                cargo: "Supervisor de Mantenimiento",
+                correo: "harold.abaunzaque@unipaz.edu.co",
+                telefono: "+57 310 987 6543",
+                empresa: "UNIPAZ"
+            }
+        ];
+        localStorage.setItem('tecnicos', JSON.stringify(tecnicos));
+    }
+    return tecnicos;
+}
+
+window.renderizarTecnicos = function() {
+    const contenedor = document.getElementById('contenedor-tecnicos') || 
+                       document.getElementById('directorioTecnicos') || 
+                       document.getElementById('sec-tecnicos');
+
+    if (!contenedor) return;
+
+    const tecnicos = obtenerListaTecnicos();
+
+    let html = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2>Personal Técnico Registrado</h2>
+            <button onclick="agregarTecnico()" style="padding: 8px 16px; background: #006837; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                <i class="fa-solid fa-user-plus"></i> + Agregar Técnico
+            </button>
+        </div>
+        <div class="tecnicos-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+    `;
+
+    html += tecnicos.map(tec => `
+        <div class="tecnico-card" style="border: 1px solid #e0e0e0; border-radius: 12px; padding: 20px; background: #fff; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+            <div style="position: absolute; top: 15px; right: 15px; display: flex; gap: 10px;">
+                <button onclick="editarTecnico('${tec.id}')" title="Editar" style="background: none; border: none; cursor: pointer; font-size: 16px;">
+                    ✏️
+                </button>
+                <button onclick="eliminarTecnico('${tec.id}')" title="Eliminar" style="background: none; border: none; cursor: pointer; font-size: 16px;">
+                    🗑️
+                </button>
+            </div>
+            <div style="text-align: center;">
+                <div style="width: 70px; height: 70px; border-radius: 50%; background: #0D47A1; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 24px; margin: 0 auto 10px auto;">
+                    ${tec.nombre.charAt(0)}
+                </div>
+                <h3 style="margin: 5px 0; color: #222;">${tec.nombre}</h3>
+                <p style="color: #666; font-size: 14px; margin: 2px 0;">${tec.cargo || 'Técnico'}</p>
+                <p style="color: #888; font-size: 13px; margin: 2px 0;">✉️ ${tec.correo}</p>
+                <p style="color: #888; font-size: 13px; margin: 2px 0;">📞 ${tec.telefono || 'Sin teléfono'}</p>
+                <span style="display: inline-block; background: #e8f5e9; color: #2e7d32; font-size: 12px; padding: 3px 8px; border-radius: 4px; margin-top: 8px;">
+                    ${tec.empresa || 'UNIPAZ'}
+                </span>
+            </div>
+        </div>
+    `).join('');
+
+    html += `</div>`;
+    contenedor.innerHTML = html;
+};
+
+window.agregarTecnico = window.abrirModalAgregarTecnico = function() {
+    const nombre = prompt("Nombre completo del técnico:");
+    if (!nombre) return;
+
+    const cargo = prompt("Cargo o Especialidad:", "Técnico de Mantenimiento");
+    const correo = prompt("Correo Electrónico:");
+    const telefono = prompt("Teléfono:");
+    const empresa = prompt("Empresa / Institución:", "UNIPAZ");
+
+    const tecnicos = obtenerListaTecnicos();
+    tecnicos.push({
+        id: String(Date.now()),
+        nombre: nombre,
+        cargo: cargo || "Técnico",
+        correo: correo || "",
+        telefono: telefono || "",
+        empresa: empresa || "UNIPAZ"
+    });
+
+    localStorage.setItem('tecnicos', JSON.stringify(tecnicos));
+    alert("¡Técnico registrado exitosamente!");
+
+    renderizarTecnicos();
+    cargarSelectTecnicos();
+};
+
+window.editarTecnico = function(id) {
+    const tecnicos = obtenerListaTecnicos();
+    const index = tecnicos.findIndex(t => String(t.id) === String(id));
+
+    if (index === -1) {
+        alert("No se encontró el técnico a editar.");
+        return;
+    }
+
+    const tec = tecnicos[index];
+    const nuevoNombre = prompt("Editar Nombre:", tec.nombre);
+    if (nuevoNombre === null) return;
+
+    const nuevoCargo = prompt("Editar Cargo/Especialidad:", tec.cargo || "");
+    if (nuevoCargo === null) return;
+
+    const nuevoCorreo = prompt("Editar Correo:", tec.correo || "");
+    if (nuevoCorreo === null) return;
+
+    const nuevoTelefono = prompt("Editar Teléfono:", tec.telefono || "");
+    if (nuevoTelefono === null) return;
+
+    tecnicos[index].nombre = nuevoNombre;
+    tecnicos[index].cargo = nuevoCargo;
+    tecnicos[index].correo = nuevoCorreo;
+    tecnicos[index].telefono = nuevoTelefono;
+
+    localStorage.setItem('tecnicos', JSON.stringify(tecnicos));
+    alert("¡Técnico actualizado!");
+
+    renderizarTecnicos();
+    cargarSelectTecnicos();
+};
+
+window.eliminarTecnico = function(id) {
+    if (!confirm("¿Está seguro de eliminar este técnico?")) return;
+
+    let tecnicos = obtenerListaTecnicos();
+    tecnicos = tecnicos.filter(t => String(t.id) !== String(id));
+
+    localStorage.setItem('tecnicos', JSON.stringify(tecnicos));
+    alert("Técnico eliminado.");
+
+    renderizarTecnicos();
+    cargarSelectTecnicos();
+};
+
+// INICIALIZACIÓN AUTOMÁTICA AL CARGAR
+function ejecutarInicializaciones() {
+    cargarSelectEstaciones();
+    cargarSelectTecnicos();
+    renderizarTecnicos();
+}
+
+document.addEventListener('DOMContentLoaded', ejecutarInicializaciones);
+setTimeout(ejecutarInicializaciones, 500);
+setTimeout(ejecutarInicializaciones, 1500);
