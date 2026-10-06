@@ -70,19 +70,30 @@
     </div>
 
     <!-- NAVEGACIÓN SUPERIOR / NAVBAR -->
-    <header class="main-header">
-        <div class="header-container">
-            <div class="brand-container">
-                <span class="brand-tag">UNIPAZ</span>
-                <span class="brand-tag eco">ECOPETROL</span>
-                <h1 class="system-title">Gestión de Mantenimientos</h1>
-            </div>
-
-            <div class="user-status-bar">
-                <span id="userBadgeRole" class="user-badge"><i class="fa-solid fa-circle-user"></i> Rol: Supervisor</span>
-                <button onclick="cerrarSesion()" class="btn-logout"><i class="fa-solid fa-power-off"></i> Salir</button>
+    <!-- NAVEGACIÓN SUPERIOR / NAVBAR -->
+    <header style="background-color: #004d40; color: white; padding: 12px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
+        
+        <!-- Esquina Izquierda: Logos e Instituciones -->
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <img src="logo-unipaz.png" alt="UNIPAZ" style="height: 42px; background: white; padding: 3px; border-radius: 6px;">
+            <img src="logo-ecopetrol.png" alt="ECOPETROL" style="height: 42px; background: white; padding: 3px; border-radius: 6px;">
+            <div>
+                <h1 style="margin: 0; font-size: 20px; font-weight: bold; color: #ffffff;">Gestión de Mantenimientos</h1>
+                <span style="font-size: 11px; color: #a7f3d0; font-weight: 500;">UNIPAZ & ECOPETROL</span>
             </div>
         </div>
+
+        <!-- Esquina Derecha: Info de Rol y Botón Salir -->
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <div style="background: rgba(255,255,255,0.1); padding: 6px 14px; border-radius: 20px; font-size: 13px; text-align: right;">
+                <span style="color: #e0f2fe; display: block;">Rol: <strong id="userRoleDisplay" style="color: #fff;">Supervisor</strong></span>
+                <small id="userEmailDisplay" style="color: #cbd5e1;">(harold.abaunzaque@unipaz.edu.co)</small>
+            </div>
+            <button onclick="cerrarSesion()" style="background: #dc2626; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                🚪 Salir
+            </button>
+        </div>
+
     </header>
 
     <!-- MENÚ DE PESTAÑAS -->
@@ -293,8 +304,16 @@
             </div>
 
             <div style="margin-top: 15px; text-align: left;">
-                <img id="modalVistaPreviaFoto" src="https://via.placeholder.com/60" alt="Previa" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 1px solid #ddd;">
-            </div>
+    <label style="font-size: 13px; font-weight: bold; color: #444; display: block; margin-bottom: 5px;">Foto de Perfil:</label>
+    <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+        <input type="text" id="modalTecnicoFoto" placeholder="URL o sube un archivo..." style="flex: 1; padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px;">
+        <label for="modalFileInput" style="background: #006837; color: white; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold;">
+            📁 Subir Foto
+        </label>
+        <input type="file" id="modalFileInput" accept="image/*" onchange="cargarArchivoFotoModal(event)" style="display: none;">
+    </div>
+    <img id="modalVistaPreviaFoto" src="https://via.placeholder.com/60" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;">
+</div>
 
             <!-- Footer Botón -->
             <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">

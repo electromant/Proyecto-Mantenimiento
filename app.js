@@ -477,12 +477,9 @@ window.cargarSelectEstaciones = function() {
 
 window.cargarSelectTecnicos = function() {
     const select = document.getElementById("tecnicoSelect");
-
     if (!select) return;
 
-    const tecnicos = JSON.parse(localStorage.getItem('tecnicos')) || [
-        { id: "1", nombre: "Ing. Harold Abaunzaque", correo: "harold.abaunzaque@unipaz.edu.co", empresa: "UNIPAZ" }
-    ];
+    const tecnicos = JSON.parse(localStorage.getItem('tecnicos')) || [];
 
     select.innerHTML = '<option value="">-- Seleccione Técnico --</option>';
     tecnicos.forEach(t => {
@@ -492,6 +489,31 @@ window.cargarSelectTecnicos = function() {
         option.textContent = `${t.nombre} (${t.empresa || 'UNIPAZ - ECOPETROL'})`;
         select.appendChild(option);
     });
+};
+
+window.autocompletarCorreoTecnico = function() {
+    const select = document.getElementById("tecnicoSelect");
+    const inputCorreo = document.getElementById("correoNotificacion") || document.querySelector("input[name='correo']") || document.querySelectorAll("input[type='email']")[0];
+
+    if (select && inputCorreo) {
+        const selectedOption = select.options[select.selectedIndex];
+        const correo = selectedOption.dataset.correo || "";
+        inputCorreo.value = correo;
+        inputCorreo.removeAttribute("readonly"); // Permite editar libremente si el usuario lo desea
+    }
+};
+
+window.cargarArchivoFotoModal = function(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const base64Image = e.target.result;
+            document.getElementById('modalTecnicoFoto').value = base64Image;
+            document.getElementById('modalVistaPreviaFoto').src = base64Image;
+        };
+        reader.readAsDataURL(file);
+    }
 };
 
 function guardarOrden(e) {
@@ -982,4 +1004,17 @@ window.eliminarTecnico = function(id) {
     localStorage.setItem('tecnicos', JSON.stringify(tecnicos));
     renderizarTecnicos();
     if (typeof cargarSelectTecnicos === 'function') cargarSelectTecnicos();
+};
+
+window.cargarArchivoFotoModal = function(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const base64Image = e.target.result;
+            document.getElementById('modalTecnicoFoto').value = base64Image;
+            document.getElementById('modalVistaPreviaFoto').src = base64Image;
+        };
+        reader.readAsDataURL(file);
+    }
 };
