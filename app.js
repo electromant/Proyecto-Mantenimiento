@@ -624,43 +624,49 @@ function eliminarOrden(idOrden) {
 }
 
 function enviarNotificacionEmail(orden) {
-    Swal.fire({
-        title: 'Enviando notificación...',
-        text: 'Por favor espera un momento.',
-        allowOutsideClick: false,
-        didOpen: () => {
-            Swal.showLoading();
-        }
-    });
+    const serviceID = 'JE11549ZTfvlO5Ozg';
+    const templateID = 'template_uadyeyr';
 
     const templateParams = {
         to_email: orden.correo,
         tecnico_nombre: orden.tecnico,
-        equipo_estacion: orden.estacion,
+        estacion: orden.estacion,
         tipo_mantenimiento: orden.tipo,
-        jornada_trabajo: orden.jornada,
-        fecha_mantenimiento: orden.fecha,
-        hora_mantenimiento: orden.hora
+        fecha: orden.fecha,
+        hora: orden.hora,
+        jornada: orden.jornada
     };
 
-    emailjs.send("service_nzn02hp", "template_uadyeyr", templateParams)
-        .then(function(response) {
-            console.log("NOTIFICACIÓN ENVIADA ÉXITO", response.status, response.text);
-            Swal.fire({
-                title: '¡Notificación Enviada!',
-                text: `Se ha enviado el correo a ${orden.correo} correctamente.`,
-                icon: 'success',
-                confirmButtonColor: '#004d40'
+    // Intenta enviar vía EmailJS
+    if (typeof emailjs !== 'undefined') {
+        emailjs.send(serviceID, templateID, templateParams)
+            .then(() => {
+                Swal.fire('¡Éxito!', 'Orden guardada y correo enviado por EmailJS.', 'success');
+            })
+            .catch(() => {
+                // Si falla EmailJS, usa el respaldo directo mailto:
+                abrirCorreoRespaldo(orden);
             });
-        }, function(error) {
-            console.error("ERROR EN EMAILJS:", error);
-            Swal.fire({
-                title: 'Error',
-                text: 'No se pudo enviar la notificación. Revisa tus credenciales de EmailJS.',
-                icon: 'error',
-                confirmButtonColor: '#d32f2f'
-            });
-        });
+    } else {
+        abrirCorreoRespaldo(orden);
+    }
+}
+
+function abrirCorreoRespaldo(orden) {
+    if (orden.correo) {
+        const asunto = encodeURIComponent(`Nueva Orden Asignada: ${orden.id} - ${orden.estacion}`);
+        const cuerpo = encodeURIComponent(
+            `Hola ${orden.tecnico},\n\n` +
+            `Se te ha asignado la siguiente orden de mantenimiento:\n` +
+            `- Estación/Equipo: ${orden.estacion}\n` +
+            `- Tipo: ${orden.tipo}\n` +
+            `- Fecha: ${orden.fecha} - ${orden.hora}\n` +
+            `- Jornada: ${orden.jornada}\n\n` +
+            `Atentamente,\nGestión de Mantenimientos UNIPAZ - ECOPETROL`
+        );
+        window.open(`mailto:${orden.correo}?subject=${asunto}&body=${cuerpo}`, '_self');
+    }
+    Swal.fire('Orden Agendada', 'La orden se guardó correctamente.', 'success');
 }
 
 // DIRECTORIO DE TÉCNICOS
