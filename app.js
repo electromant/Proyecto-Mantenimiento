@@ -485,7 +485,8 @@ window.cargarSelectTecnicos = function() {
     tecnicos.forEach(t => {
         const option = document.createElement("option");
         option.value = t.nombre;
-        option.dataset.correo = t.correo || "";
+        // Se guarda el correo como atributo dataset.correo
+        option.setAttribute("data-correo", t.correo || "");
         option.textContent = `${t.nombre} (${t.empresa || 'UNIPAZ - ECOPETROL'})`;
         select.appendChild(option);
     });
@@ -493,13 +494,12 @@ window.cargarSelectTecnicos = function() {
 
 window.autocompletarCorreoTecnico = function() {
     const select = document.getElementById("tecnicoSelect");
-    const inputCorreo = document.getElementById("correoNotificacion") || document.querySelector("input[name='correo']") || document.querySelectorAll("input[type='email']")[0];
+    const inputCorreo = document.getElementById("correoNotificacion");
 
     if (select && inputCorreo) {
         const selectedOption = select.options[select.selectedIndex];
-        const correo = selectedOption.dataset.correo || "";
-        inputCorreo.value = correo;
-        inputCorreo.removeAttribute("readonly"); // Permite editar libremente si el usuario lo desea
+        const correo = selectedOption ? selectedOption.getAttribute("data-correo") : "";
+        inputCorreo.value = correo || "";
     }
 };
 

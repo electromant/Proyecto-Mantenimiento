@@ -124,58 +124,62 @@
                 
                 <form id="formOrden" onsubmit="guardarOrden(event)">
                     <div class="form-grid">
-                        <div class="form-group">
-                            <label><i class="fa-solid fa-industry"></i> Estación / Equipo:</label>
-                            <select id="estacionSelect" class="form-control" required onchange="actualizarGeolocalizacionEnFormulario()">
-                                <option value="">-- Seleccione Ubicación --</option>
-                            </select>
-                        </div>
+    <!-- Estación / Equipo -->
+    <div class="form-group">
+        <label><i class="fa-solid fa-industry"></i> Estación / Equipo:</label>
+        <select id="ordenEstacion" class="form-control" required></select>
+    </div>
 
-                        <div class="form-group">
-                            <label><i class="fa-solid fa-screwdriver-wrench"></i> Tipo Mantenimiento:</label>
-                            <select id="tipoMantenimiento" class="form-control">
-                                <option value="Preventivo">Preventivo</option>
-                                <option value="Correctivo">Correctivo</option>
-                                <option value="Predictivo">Predictivo</option>
-                            </select>
-                        </div>
+    <!-- Tipo Mantenimiento -->
+    <div class="form-group">
+        <label><i class="fa-solid fa-wrench"></i> Tipo Mantenimiento:</label>
+        <select id="ordenTipo" class="form-control" required>
+            <option value="Correctivo">Correctivo</option>
+            <option value="Preventivo">Preventivo</option>
+            <option value="Predictivo">Predictivo</option>
+        </select>
+    </div>
 
-                        <div class="form-group">
-                            <label><i class="fa-solid fa-clock"></i> Jornada:</label>
-                            <select id="jornadaSelect" class="form-control">
-                                <option value="Diurna (07:00 AM - 04:00 PM)">Diurna (07:00 AM - 04:00 PM)</option>
-                                <option value="Nocturna (07:00 PM - 04:00 AM)">Nocturna (07:00 PM - 04:00 AM)</option>
-                            </select>
-                        </div>
+    <!-- Jornada -->
+    <div class="form-group">
+        <label><i class="fa-solid fa-clock"></i> Jornada:</label>
+        <select id="jornadaSelect" class="form-control">
+            <option value="Diurna (07:00 AM - 04:00 PM)">Diurna (07:00 AM - 04:00 PM)</option>
+            <option value="Nocturna (07:00 PM - 04:00 AM)">Nocturna (07:00 PM - 04:00 AM)</option>
+        </select>
+    </div>
 
-                        <div class="form-group">
-                            <label><i class="fa-solid fa-calendar-day"></i> Fecha:</label>
-                            <input type="date" id="fechaOrden" class="form-control" required>
-                        </div>
+    <!-- Fecha -->
+    <div class="form-group">
+        <label><i class="fa-solid fa-calendar-day"></i> Fecha:</label>
+        <input type="date" id="fechaOrden" class="form-control" required>
+    </div>
 
-                        <div class="form-group">
-                            <label><i class="fa-solid fa-hourglass-start"></i> Hora:</label>
-                            <input type="time" id="horaOrden" class="form-control" required>
-                        </div>
+    <!-- Hora -->
+    <div class="form-group">
+        <label><i class="fa-solid fa-hourglass-start"></i> Hora:</label>
+        <input type="time" id="horaOrden" class="form-control" required>
+    </div>
 
-                        <div class="form-group">
-                            <label><i class="fa-solid fa-user-gear"></i> Técnico Asignado:</label>
-                            <select id="tecnicoSelect" name="tecnico" class="form-control" required onchange="autocompletarCorreoTecnico()"></select>
-                                <option value="">-- Seleccione Técnico --</option>
-                            </select>
-                        </div>
+    <!-- Técnico Asignado -->
+    <div class="form-group">
+        <label><i class="fa-solid fa-user-gear"></i> Técnico Asignado:</label>
+        <select id="tecnicoSelect" class="form-control" required onchange="autocompletarCorreoTecnico()"></select>
+    </div>
 
-                        <div class="form-group full-width">
-                            <label><i class="fa-solid fa-envelope"></i> Correo Notificación:</label>
-                            <input type="email" id="correoTecnico" class="form-control" placeholder="Selecciona un técnico" readonly>
-                        </div>
-                    </div>
+    <!-- Correo Notificación (Dentro de la grilla) -->
+    <div class="form-group" style="grid-column: span 2;">
+        <label><i class="fa-solid fa-envelope"></i> Correo Notificación:</label>
+        <input type="email" id="correoNotificacion" class="form-control" placeholder="Correo del técnico seleccionado">
+    </div>
+</div>
 
-                    <div class="form-actions">
-                        <button type="submit" class="btn-primary">
-                            <i class="fa-solid fa-paper-plane"></i> Guardar y Notificar Orden
-                        </button>
-                    </div>
+<!-- Botón abajo libremente -->
+<div style="margin-top: 15px;">
+    <button type="submit" class="btn-primary" style="width: auto; padding: 10px 20px;">
+        <i class="fa-solid fa-paper-plane"></i> Guardar y Notificar Orden
+    </button>
+</div>
                 </form>
             </div>
 
@@ -303,16 +307,18 @@
                 <input type="text" id="modalTecnicoFoto" onchange="actualizarVistaPreviaFotoModal()" style="width: 100%; padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
             </div>
 
-            <div style="margin-top: 15px; text-align: left;">
+ <div style="margin-top: 15px; text-align: left;">
     <label style="font-size: 13px; font-weight: bold; color: #444; display: block; margin-bottom: 5px;">Foto de Perfil:</label>
     <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
-        <input type="text" id="modalTecnicoFoto" placeholder="URL o sube un archivo..." style="flex: 1; padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px;">
-        <label for="modalFileInput" style="background: #006837; color: white; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold;">
+        <input type="text" id="modalTecnicoFoto" placeholder="URL de la foto o sube una..." style="flex: 1; padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px;">
+        <label for="modalFileInput" style="background: #006837; color: white; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold;">
             📁 Subir Foto
         </label>
         <input type="file" id="modalFileInput" accept="image/*" onchange="cargarArchivoFotoModal(event)" style="display: none;">
     </div>
-    <img id="modalVistaPreviaFoto" src="https://via.placeholder.com/60" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;">
+    <div style="text-align: center;">
+        <img id="modalVistaPreviaFoto" src="https://via.placeholder.com/60" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 1px solid #ddd;">
+    </div>
 </div>
 
             <!-- Footer Botón -->
