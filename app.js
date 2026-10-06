@@ -476,15 +476,12 @@ window.cargarSelectEstaciones = function() {
 };
 
 window.cargarSelectTecnicos = function() {
-    const select = document.getElementById("ordenTecnico") || 
-                   document.getElementById("tecnico") || 
-                   document.querySelector("select[name='tecnico']") ||
-                   document.querySelectorAll("select")[3];
+    const select = document.getElementById("tecnicoSelect");
 
     if (!select) return;
 
     const tecnicos = JSON.parse(localStorage.getItem('tecnicos')) || [
-        { id: "1", nombre: "Ing. Harold Abaunzaque", correo: "harold.abaunzaque@unipaz.edu.co" }
+        { id: "1", nombre: "Ing. Harold Abaunzaque", correo: "harold.abaunzaque@unipaz.edu.co", empresa: "UNIPAZ" }
     ];
 
     select.innerHTML = '<option value="">-- Seleccione Técnico --</option>';
@@ -492,7 +489,7 @@ window.cargarSelectTecnicos = function() {
         const option = document.createElement("option");
         option.value = t.nombre;
         option.dataset.correo = t.correo || "";
-        option.textContent = `${t.nombre} (${t.empresa || 'UNIPAZ'})`;
+        option.textContent = `${t.nombre} (${t.empresa || 'UNIPAZ - ECOPETROL'})`;
         select.appendChild(option);
     });
 };

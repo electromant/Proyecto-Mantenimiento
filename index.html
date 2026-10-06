@@ -14,10 +14,9 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <!-- FontAwesome CSS (Iconos) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- SweetAlert2 CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+   <!-- SweetAlert2 CSS y JS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
     <!-- Estilos Personalizados -->
     <link rel="stylesheet" href="styles.css">
 
@@ -150,7 +149,7 @@
 
                         <div class="form-group">
                             <label><i class="fa-solid fa-user-gear"></i> Técnico Asignado:</label>
-                            <select id="tecnicoSelect" class="form-control" required onchange="autocompletarCorreoTecnico()">
+                            <select id="tecnicoSelect" name="tecnico" class="form-control" required onchange="autocompletarCorreoTecnico()"></select>
                                 <option value="">-- Seleccione Técnico --</option>
                             </select>
                         </div>
