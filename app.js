@@ -100,43 +100,36 @@ let listaOrdenes = JSON.parse(localStorage.getItem('ordenes_data')) || [
 // 1. APLICAR PERMISOS SEGÚN EL ROL
 // ==========================================
 function aplicarPermisosPorRol() {
+    // Obtener rol (asegurando el valor exacto seleccionado)
     const rolActual = window.rolUsuarioActual || localStorage.getItem('user_role') || "Supervisor";
     const emailActual = window.correoUsuarioActual || localStorage.getItem('user_email') || "";
-    
-    // Normalizar string del rol para evitar problemas de acentos o mayúsculas
+
     const esTecnico = rolActual.toLowerCase().includes("tecnico") || rolActual.toLowerCase().includes("técnico");
 
-    // 1. Actualizar texto de Header/Perfil
-    const roleElem = document.getElementById("userRoleDisplay");
+    // 1. Actualizar texto de Header/Perfil inmediatamente
+    const roleElem = document.getElementById("userRoleDisplay") || document.querySelector(".rol-text") || document.querySelector("[id*='Role']");
     const emailElem = document.getElementById("userEmailDisplay");
 
-    if (roleElem) roleElem.textContent = rolActual;
+    if (roleElem) roleElem.textContent = esTecnico ? "Técnico" : "Supervisor";
     if (emailElem) emailElem.textContent = emailActual ? `(${emailActual})` : "";
 
-    // 2. Re-renderizar técnicos si existe la función para actualizar su vista
-    if (typeof listaTecnicos !== 'undefined' && typeof renderizarTecnicos === 'function') {
-        renderizarTecnicos(listaTecnicos);
+    // 2. Ocultar / Mostrar Formulario de Crear u Agendar Orden (Solo Supervisor)
+    const formOrden = document.getElementById("formOrden") || document.getElementById("formMantenimiento");
+    const cardFormulario = formOrden ? formOrden.closest(".card, .card-box, section") : document.querySelector(".supervisor-only");
+    
+    if (cardFormulario) {
+        cardFormulario.style.display = esTecnico ? "none" : "block";
     }
 
-    // 3. Ocultar o mostrar Formulario de Agendamiento / Crear Orden (Solo Supervisor)
-    const cardSupervisor = document.querySelector(".card-box.supervisor-only") || 
-                           document.getElementById("formOrden")?.closest('.card') || 
-                           document.getElementById("formOrden");
-                           
-    if (cardSupervisor) {
-        cardSupervisor.style.display = esTecnico ? "none" : "block";
-    }
+    // 3. Ocultar / Mostrar Botón "+ Agregar Técnico" (Solo Supervisor)
+    const btnsAgregarTecnico = document.querySelectorAll("#btnAbrirModalTecnico, button[onclick*='Tecnico'], .btn-agregar-tecnico");
+    btnsAgregarTecnico.forEach(btn => {
+        btn.style.display = esTecnico ? "none" : "inline-block";
+    });
 
-    // 4. Ocultar o mostrar botón "+ Agregar Técnico" (Solo Supervisor)
-    const btnAgregarTecnico = document.getElementById("btnAbrirModalTecnico") || 
-                              document.querySelector("button[onclick*='Modal']");
-    if (btnAgregarTecnico) {
-        btnAgregarTecnico.style.display = esTecnico ? "none" : "inline-block";
-    }
-
-    // 5. Ocultar o mostrar acciones de edición/eliminación en listas y tablas (Solo Supervisor)
-    const accionesAcceso = document.querySelectorAll(".card-tecnico-actions, .btn-action-icon, .btn-editar, .btn-eliminar, .acciones-orden");
-    accionesAcceso.forEach(el => {
+    // 4. Ocultar / Mostrar Botones de Editar y Eliminar en Técnicos y Órdenes (Solo Supervisor)
+    const acciones = document.querySelectorAll(".card-tecnico-actions, .btn-action-icon, .btn-editar, .btn-eliminar, .acciones-orden, [onclick*='editar'], [onclick*='eliminar']");
+    acciones.forEach(el => {
         el.style.display = esTecnico ? "none" : "inline-flex";
     });
 }
@@ -147,38 +140,42 @@ function aplicarPermisosPorRol() {
 window.ejecutarIngresoDirecto = function(e) {
     if (e && e.preventDefault) e.preventDefault();
 
-    // Obtención de elementos del formulario
-    const emailInput = document.getElementById("loginEmail") || document.querySelector("input[type='email']");
-    const roleSelect = document.getElementById("loginRole") || document.querySelector("select");
+    // Obtener inputs estrictos del modal de login
+    const emailInput = document.getElementById("loginEmail") || document.querySelector("#loginOverlay input[type='email']") || document.querySelector("input[type='email']");
+    const roleSelect = document.getElementById("loginRole") || document.querySelector("#loginOverlay select") || document.querySelector("select");
 
     const email = emailInput ? emailInput.value.trim() : "";
     const role = roleSelect ? roleSelect.value : "";
 
-    // VALIDACIÓN OBLIGATORIA DE CORREO Y ROL
-    if (!email || !role || role.includes("--")) {
+    // VALIDACIÓN OBLIGATORIA: no permite ingresar si el correo está vacío o el rol es nulo/por defecto
+    if (!email || !role || role === "" || role.includes("--") || role.includes("Selecciona")) {
         if (window.Swal) {
-            Swal.fire('Atención', 'Por favor ingresa tu correo electrónico y selecciona un rol válido para continuar.', 'warning');
+            Swal.fire({
+                title: 'Campos requeridos',
+                text: 'Por favor ingresa tu correo electrónico y selecciona un rol válido.',
+                icon: 'warning'
+            });
         } else {
             alert('Por favor ingresa tu correo electrónico y selecciona un rol válido.');
         }
-        return;
+        return false;
     }
 
-    // Guardar variables en sesión global y almacenamiento local
+    // Guardar estado global y en almacenamiento local
     window.rolUsuarioActual = role;
     window.correoUsuarioActual = email;
     localStorage.setItem('user_role', role);
     localStorage.setItem('user_email', email);
 
-    // Ocultar modal/overlay de inicio de sesión
+    // Ocultar modal de login
     const overlay = document.getElementById("loginOverlay");
     if (overlay) overlay.style.display = "none";
     document.body.classList.remove("not-logged-in");
 
-    // Ejecutar inmediatamente el cambio de permisos e interfaz según el rol
+    // Aplicar permisos
     aplicarPermisosPorRol();
 
-    // Mensaje de éxito
+    // Notificación SweetAlert2
     if (window.Swal) {
         Swal.fire({
             title: '¡Bienvenido!',
@@ -189,6 +186,40 @@ window.ejecutarIngresoDirecto = function(e) {
         });
     }
 };
+
+// ==========================================
+// 3. REEMPLAZO DE ELIMINAR TÉCNICO CON SWEETALERT2
+// ==========================================
+function eliminarTecnico(id) {
+    if (window.Swal) {
+        Swal.fire({
+            title: '¿Está seguro?',
+            text: "Esta acción eliminará al técnico del sistema.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Eliminar del arreglo si existe
+                if (typeof listaTecnicos !== 'undefined') {
+                    listaTecnicos = listaTecnicos.filter(t => t.id !== id);
+                    if (typeof renderizarTecnicos === 'function') renderizarTecnicos(listaTecnicos);
+                }
+                Swal.fire('¡Eliminado!', 'El técnico ha sido eliminado correctamente.', 'success');
+            }
+        });
+    } else {
+        if (confirm("¿Está seguro de eliminar este técnico?")) {
+            if (typeof listaTecnicos !== 'undefined') {
+                listaTecnicos = listaTecnicos.filter(t => t.id !== id);
+                if (typeof renderizarTecnicos === 'function') renderizarTecnicos(listaTecnicos);
+            }
+        }
+    }
+}
 
 // Cargar permisos guardados al recargar la página
 document.addEventListener("DOMContentLoaded", function() {
