@@ -465,37 +465,62 @@ document.addEventListener('DOMContentLoaded', () => {
 // INGRESO, SALIDA Y ROLES
    
 
-window.ejecutarIngresoDirecto = function() {
-    const emailInput = document.getElementById("loginEmail");
-    const roleInput = document.getElementById("loginRole");
+window.ejecutarIngresoDirecto = function(e) {
+    // Detener la recarga por defecto si viene de un evento submit
+    if (e && e.preventDefault) e.preventDefault();
 
-    const email = emailInput ? emailInput.value : "harold.abaunzaque@unipaz.edu.co";
-    const role = roleInput ? roleInput.value : "Supervisor";
+    // 1. Detectar el input de Correo por múltiples IDs o tipos
+    const emailInput = document.getElementById("loginEmail") || 
+                        document.querySelector("#loginOverlay input[type='email']") ||
+                        document.querySelector("input[type='email']");
 
-    // 🔴 Asignar ROL global y guardar en localStorage PRIMERO
-    rolUsuarioActual = role;
-    localStorage.setItem('user_role', role);
+    // 2. Detectar el Select de Rol por múltiples IDs
+    const roleSelect = document.getElementById("loginRole") || 
+                       document.getElementById("rol") || 
+                       document.querySelector("#loginOverlay select") ||
+                       document.querySelector("select");
 
-    // Ocultar modal de login
-    const overlay = document.getElementById("loginOverlay");
-    if (overlay) {
-        overlay.style.display = "none";
+    // 3. Capturar valores
+    const email = emailInput ? emailInput.value.trim() : "";
+    const role = roleSelect ? roleSelect.value : "";
+
+    // Validación rápida
+    if (!email || !role || role.includes("--")) {
+        if (window.Swal) {
+            Swal.fire('Atención', 'Por favor ingresa un correo válido y selecciona un rol.', 'warning');
+        } else {
+            alert('Por favor ingresa un correo válido y selecciona un rol.');
+        }
+        return false;
     }
 
+    // 4. Guardar credenciales activas
+    window.rolUsuarioActual = role;
+    window.correoUsuarioActual = email;
+
+    localStorage.setItem('user_role', role);
+    localStorage.setItem('user_email', email);
+
+    // 5. Ocultar la pantalla de Login
+    const overlay = document.getElementById("loginOverlay");
+    if (overlay) overlay.style.display = "none";
     document.body.classList.remove("not-logged-in");
 
-    // 🔴 Aplicar las restricciones visuales
+    // 6. Aplicar permisos y refrescar la vista
     aplicarPermisosPorRol();
 
+    // 7. Feedback de inicio de sesión
     if (window.Swal) {
         Swal.fire({
             title: '¡Bienvenido!',
             text: `Sesión iniciada como ${role}`,
             icon: 'success',
-            timer: 1200,
+            timer: 1300,
             showConfirmButton: false
         });
     }
+
+    return false;
 };
 
 function aplicarPermisosPorRol() {
