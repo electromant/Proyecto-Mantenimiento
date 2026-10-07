@@ -1,3 +1,4 @@
+let rolUsuarioActual = localStorage.getItem('user_role') || "Supervisor";
 // CONFIGURACIÓN E INICIALIZACIÓN DE SUPABASE
 const SUPABASE_URL = "https://jseocskipyhkmzatdplx.supabase.co";
 const SUPABASE_KEY = "sb_publishable_DbyAT_qBKj3hDVuBk0zUoQ_sWVAxMx2";
@@ -9,9 +10,6 @@ var supabase = window.supabaseClient;
 
 // Variable global para controlar la instancia del mapa Leaflet
 let mapInstance = null;
-
-// Variable global para almacenar el rol activo ("Supervisor" o "Técnico")
-let rolUsuarioActual = localStorage.getItem('user_role') || "Supervisor";
 
 const estacionesUbicaciones = [
     {
@@ -389,35 +387,41 @@ window.ejecutarIngresoDirecto = function() {
 };
 
 function aplicarPermisosPorRol() {
-    // Tomar el rol actual
-    const rolActual = rolUsuarioActual || localStorage.getItem('user_role') || "Supervisor";
+    // 1. Obtener el rol real
+    const rolActual = window.rolUsuarioActual || localStorage.getItem('user_role') || "Supervisor";
+    const email = document.getElementById("loginEmail")?.value || "usuario@unipaz.edu.co";
     const esTecnico = (rolActual === "Técnico" || rolActual === "Tecnico");
 
-    // 1. Actualizar la etiqueta del menú superior
-    const badge = document.getElementById("userBadgeRole");
+    // 2. Actualizar el texto del encabezado superior
+    const badge = document.getElementById("userBadgeRole") || document.querySelector(".user-badge");
     if (badge) {
-        const email = document.getElementById("loginEmail")?.value || "usuario@unipaz.edu.co";
-        badge.textContent = `Rol: ${rolActual} (${email})`;
+        badge.innerHTML = `Rol: <b>${rolActual}</b> <span style="font-size:0.8em; opacity:0.8;">(${email})</span>`;
     }
 
-    // 2. Ocultar o mostrar formulario de creación de órdenes
-    const formCard = document.querySelector("#tab-ordenes .card:first-child") || document.getElementById("formOrden");
+    // 3. Ocultar formulario de órdenes si es técnico
+    const formCard = document.getElementById("formOrden") || document.querySelector("#tab-ordenes .card:first-child");
     if (formCard) {
         formCard.style.display = esTecnico ? "none" : "block";
     }
 
-    // 3. Ocultar o mostrar botón "+ Agregar Técnico"
-    const btnAgregarTecnico = document.getElementById("btnAbrirModalTecnico") || document.querySelector("button[onclick*='modalTecnico']");
-    if (btnAgregarTecnico) {
-        btnAgregarTecnico.style.display = esTecnico ? "none" : "inline-block";
+    // 4. Ocultar botón "+ Agregar Técnico"
+    const btnAgregar = document.getElementById("btnAbrirModalTecnico") || document.querySelector("button[onclick*='modalTecnico']");
+    if (btnAgregar) {
+        btnAgregar.style.display = esTecnico ? "none" : "inline-block";
     }
 
-    // 4. Ocultar o mostrar botones de editar y eliminar en las tarjetas
-    const botonesAccion = document.querySelectorAll(".card-actions, .btn-action-icon, .btn-eliminar, .btn-editar");
-    botonesAccion.forEach(btn => {
-        btn.style.display = esTecnico ? "none" : "inline-block";
+    // 5. Ocultar/mostrar botones de acción en las tarjetas
+    const accionesTecnicos = document.querySelectorAll(".card-tecnico-actions, .card-actions");
+    accionesTecnicos.forEach(el => {
+        el.style.display = esTecnico ? "none" : "flex";
     });
+
+    // 6. Si existe la lista, volver a renderizar los técnicos
+    if (typeof listaTecnicos !== 'undefined' && typeof renderizarTecnicos === 'function') {
+        renderizarTecnicos(listaTecnicos);
+    }
 }
+
 function cerrarSesion() {
     if (window.Swal) {
         Swal.fire({
@@ -812,23 +816,23 @@ function aplicarPermisosPorRol() {
 
 // 3. Inicio de sesión corregido
 window.ejecutarIngresoDirecto = function() {
-    const emailElem = document.getElementById("loginEmail");
-    const roleElem = document.getElementById("loginRole");
+    const roleSelect = document.getElementById("loginRole");
+    const emailInput = document.getElementById("loginEmail");
 
-    const email = emailElem ? emailElem.value : "harold.abaunzaque@unipaz.edu.co";
-    const role = roleElem ? roleElem.value : "Supervisor";
+    // Guardar el rol seleccionado (Técnico / Supervisor)
+    const role = roleSelect ? roleSelect.value : "Técnico";
+    const email = emailInput ? emailInput.value : "usuario@unipaz.edu.co";
 
-    // Guardar variables globales y de persistencia
-    rolUsuarioActual = role;
+    // Asignar a la variable global y localStorage
+    window.rolUsuarioActual = role;
     localStorage.setItem('user_role', role);
-    localStorage.setItem('user_email', email);
 
-    // Ocultar Overlay
+    // Ocultar pantalla de login
     const overlay = document.getElementById("loginOverlay");
     if (overlay) overlay.style.display = "none";
     document.body.classList.remove("not-logged-in");
 
-    // Aplicar permisos inmediatamente
+    // Actualizar interfaz con los permisos del nuevo rol
     aplicarPermisosPorRol();
 
     if (window.Swal) {
