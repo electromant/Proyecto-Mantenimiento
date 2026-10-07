@@ -98,6 +98,43 @@ let listaOrdenes = JSON.parse(localStorage.getItem('ordenes_data')) || [
     }
 ];
 
+// Función para controlar vistas y permisos según el rol activo
+function aplicarPermisosPorRol() {
+    // 1. Obtener el rol guardado en localStorage o la variable global
+    const rolActual = localStorage.getItem("rolUsuario") || rolUsuarioActual || "Supervisor";
+    const esTecnico = (rolActual === "Técnico");
+
+    // 2. Ocultar o mostrar el botón de "Guardar y Notificar Orden"
+    const btnGuardarOrden = document.querySelector("#formOrden button[type='submit']");
+    if (btnGuardarOrden) {
+        btnGuardarOrden.style.display = esTecnico ? "none" : "inline-block";
+    }
+
+    // 3. Ocultar o mostrar el botón de "Agregar Técnico"
+    const btnAgregarTecnico = document.getElementById("btnAbrirModalTecnico") || document.querySelector("button[onclick*='modalTecnico']");
+    if (btnAgregarTecnico) {
+        btnAgregarTecnico.style.display = esTecnico ? "none" : "inline-block";
+    }
+
+    // 4. Bloquear/desbloquear los inputs del formulario para el Técnico
+    const formOrden = document.getElementById("formOrden");
+    if (formOrden) {
+        const elementos = formOrden.querySelectorAll("input, select, textarea");
+        elementos.forEach(elem => {
+            if (esTecnico) {
+                elem.setAttribute("disabled", "true");
+            } else {
+                elem.removeAttribute("disabled");
+            }
+        });
+    }
+
+    // 5. Ocultar botones de acción (eliminar/editar) en la tabla si es Técnico
+    const btnesEliminar = document.querySelectorAll(".btn-action-icon, .btn-eliminar");
+    btnesEliminar.forEach(btn => {
+        btn.style.display = esTecnico ? "none" : "inline-block";
+    });
+}
 document.addEventListener("DOMContentLoaded", () => {
     cargarSelectTecnicos();
     renderizarTecnicos(listaTecnicos);
@@ -336,6 +373,9 @@ window.ejecutarIngresoDirecto = function() {
     }
 
     document.body.classList.remove("not-logged-in");
+
+    aplicarPermisosPorRol();
+};
 
     // Aplicar restricciones de lectura/escritura según el rol seleccionado
     aplicarPermisosPorRol();
