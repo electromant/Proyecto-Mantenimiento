@@ -356,24 +356,26 @@ document.addEventListener('DOMContentLoaded', () => {
    
 
 window.ejecutarIngresoDirecto = function() {
-    const email = document.getElementById("loginEmail").value || "harold.abaunzaque@unipaz.edu.co";
-    const role = document.getElementById("loginRole").value || "Supervisor";
+    const emailInput = document.getElementById("loginEmail");
+    const roleInput = document.getElementById("loginRole");
 
+    const email = emailInput ? emailInput.value : "harold.abaunzaque@unipaz.edu.co";
+    const role = roleInput ? roleInput.value : "Supervisor";
+
+    // 🔴 Asignar ROL global y guardar en localStorage PRIMERO
     rolUsuarioActual = role;
     localStorage.setItem('user_role', role);
 
-    const badge = document.getElementById("userBadgeRole");
-    if (badge) {
-        badge.textContent = `Rol: ${role} (${email})`;
-    }
-
+    // Ocultar modal de login
     const overlay = document.getElementById("loginOverlay");
     if (overlay) {
         overlay.style.display = "none";
     }
 
     document.body.classList.remove("not-logged-in");
-aplicarPermisosPorRol();
+
+    // 🔴 Aplicar las restricciones visuales
+    aplicarPermisosPorRol();
 
     if (window.Swal) {
         Swal.fire({
@@ -387,23 +389,35 @@ aplicarPermisosPorRol();
 };
 
 function aplicarPermisosPorRol() {
-    // 1. Ocultar o mostrar formulario de creación de órdenes
-    const formCard = document.querySelector("#tab-ordenes .card:first-child");
+    // Tomar el rol actual
+    const rolActual = rolUsuarioActual || localStorage.getItem('user_role') || "Supervisor";
+    const esTecnico = (rolActual === "Técnico" || rolActual === "Tecnico");
+
+    // 1. Actualizar la etiqueta del menú superior
+    const badge = document.getElementById("userBadgeRole");
+    if (badge) {
+        const email = document.getElementById("loginEmail")?.value || "usuario@unipaz.edu.co";
+        badge.textContent = `Rol: ${rolActual} (${email})`;
+    }
+
+    // 2. Ocultar o mostrar formulario de creación de órdenes
+    const formCard = document.querySelector("#tab-ordenes .card:first-child") || document.getElementById("formOrden");
     if (formCard) {
-        formCard.style.display = (rolUsuarioActual === "Técnico") ? "none" : "block";
+        formCard.style.display = esTecnico ? "none" : "block";
     }
 
-    // 2. Ocultar o mostrar botón de registrar nuevo técnico
-    const btnRegistrarTec = document.querySelector("button[onclick='abrirModalTecnico()']");
-    if (btnRegistrarTec) {
-        btnRegistrarTec.style.display = (rolUsuarioActual === "Técnico") ? "none" : "inline-block";
+    // 3. Ocultar o mostrar botón "+ Agregar Técnico"
+    const btnAgregarTecnico = document.getElementById("btnAbrirModalTecnico") || document.querySelector("button[onclick*='modalTecnico']");
+    if (btnAgregarTecnico) {
+        btnAgregarTecnico.style.display = esTecnico ? "none" : "inline-block";
     }
 
-    // 3. Volver a renderizar tablas y tarjetas para actualizar visibilidad de botones
-    renderizarTecnicos(listaTecnicos);
-    renderizarOrdenes();
+    // 4. Ocultar o mostrar botones de editar y eliminar en las tarjetas
+    const botonesAccion = document.querySelectorAll(".card-actions, .btn-action-icon, .btn-eliminar, .btn-editar");
+    botonesAccion.forEach(btn => {
+        btn.style.display = esTecnico ? "none" : "inline-block";
+    });
 }
-
 function cerrarSesion() {
     if (window.Swal) {
         Swal.fire({
