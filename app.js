@@ -138,29 +138,70 @@ function aplicarPermisosPorRol() {
     });
 }
 
-// Función de ingreso al iniciar sesión
+// ==========================================
+// 1. APLICAR PERMISOS POR ROL
+// ==========================================
+function aplicarPermisosPorRol() {
+    const rolActual = window.rolUsuarioActual || localStorage.getItem('user_role') || "Supervisor";
+    const emailActual = window.correoUsuarioActual || localStorage.getItem('user_email') || "";
+    const esTecnico = (rolActual === "Técnico" || rolActual === "Tecnico");
+
+    // Re-renderizar técnicos si existe la función
+    if (typeof listaTecnicos !== 'undefined' && typeof renderizarTecnicos === 'function') {
+        renderizarTecnicos(listaTecnicos);
+    }
+
+    // Actualizar Header
+    const roleElem = document.getElementById("userRoleDisplay");
+    const emailElem = document.getElementById("userEmailDisplay");
+
+    if (roleElem) roleElem.textContent = rolActual;
+    if (emailElem) emailElem.textContent = emailActual ? `(${emailActual})` : "";
+
+    // Ocultar o mostrar formulario de Agendamiento
+    const cardSupervisor = document.querySelector(".card-box.supervisor-only") || 
+                           document.getElementById("formOrden")?.closest('.card') || 
+                           document.getElementById("formOrden");
+                           
+    if (cardSupervisor) {
+        cardSupervisor.style.display = esTecnico ? "none" : "block";
+    }
+
+    // Ocultar o mostrar botón "+ Agregar Técnico"
+    const btnAgregarTecnico = document.getElementById("btnAbrirModalTecnico") || 
+                              document.querySelector("button[onclick*='Modal']");
+    if (btnAgregarTecnico) {
+        btnAgregarTecnico.style.display = esTecnico ? "none" : "inline-block";
+    }
+
+    // Ocultar o mostrar acciones de edición/eliminación
+    const accionesTecnicos = document.querySelectorAll(".card-tecnico-actions, .btn-action-icon, .btn-editar, .btn-eliminar");
+    accionesTecnicos.forEach(el => {
+        el.style.display = esTecnico ? "none" : "inline-flex";
+    });
+}
+
+// ==========================================
+// 2. FUNCIÓN DE INGRESO AL INICIAR SESIÓN
+// ==========================================
 window.ejecutarIngresoDirecto = function(e) {
     if (e && e.preventDefault) e.preventDefault();
 
-    const roleSelect = document.getElementById("loginRole") || document.querySelector("#loginOverlay select");
-    const emailInput = document.getElementById("loginEmail") || document.querySelector("#loginOverlay input[type='email']");
+    const roleSelect = document.getElementById("loginRole") || document.querySelector("select");
+    const emailInput = document.getElementById("loginEmail") || document.querySelector("input[type='email']");
 
     const role = roleSelect ? roleSelect.value : "";
     const email = emailInput ? emailInput.value.trim() : "";
 
-    if (!role || !email) {
-        if (window.Swal) {
-            Swal.fire('Atención', 'Por favor ingresa tu correo y selecciona un rol.', 'warning');
-        } else {
-            alert('Por favor ingresa tu correo y selecciona un rol.');
-        }
+    if (!role || !email || role.includes("--")) {
+        if (window.Swal) Swal.fire('Atención', 'Por favor ingresa tu correo y selecciona un rol.', 'warning');
+        else alert('Por favor ingresa tu correo y selecciona un rol.');
         return;
     }
 
-    // Guardar variables globales y almacenamiento persistente
+    // Guardar variables globales y localStorage
     window.rolUsuarioActual = role;
     window.correoUsuarioActual = email;
-
     localStorage.setItem('user_role', role);
     localStorage.setItem('user_email', email);
 
@@ -169,34 +210,10 @@ window.ejecutarIngresoDirecto = function(e) {
     if (overlay) overlay.style.display = "none";
     document.body.classList.remove("not-logged-in");
 
-    // APLICAR LOS PERMISOS INMEDIATAMENTE CON EL NUEVO ROL
+    // Aplicar permisos
     aplicarPermisosPorRol();
 
     if (window.Swal) {
-        Swal.fire({
-            title: '¡Bienvenido!',
-            text: `Sesión iniciada como ${role}`,
-            icon: 'success',
-            timer: 1300,
-            showConfirmButton: false
-        });
-    }
-};
-
-    // Guardar en variable global y localStorage
-    window.rolUsuarioActual = role;
-    localStorage.setItem('user_role', role);
-    localStorage.setItem('user_email', email);
-
-    // Ocultar overlay de login
-    const overlay = document.getElementById("loginOverlay");
-    if (overlay) overlay.style.display = "none";
-    document.body.classList.remove("not-logged-in");
-
-    // Aplicar permisos inmediatamente con el nuevo rol
-    aplicarPermisosPorRol();
-
-  if (window.Swal) {
         Swal.fire({
             title: '¡Bienvenido!',
             text: `Sesión iniciada como ${role}`,
