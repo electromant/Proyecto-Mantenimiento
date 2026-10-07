@@ -373,12 +373,7 @@ window.ejecutarIngresoDirecto = function() {
     }
 
     document.body.classList.remove("not-logged-in");
-
-    aplicarPermisosPorRol();
-};
-
-    // Aplicar restricciones de lectura/escritura según el rol seleccionado
-    aplicarPermisosPorRol();
+aplicarPermisosPorRol();
 
     if (window.Swal) {
         Swal.fire({
@@ -389,7 +384,7 @@ window.ejecutarIngresoDirecto = function() {
             showConfirmButton: false
         });
     }
-}
+};
 
 function aplicarPermisosPorRol() {
     // 1. Ocultar o mostrar formulario de creación de órdenes
