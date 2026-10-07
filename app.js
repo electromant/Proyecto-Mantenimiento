@@ -97,48 +97,85 @@ let listaOrdenes = JSON.parse(localStorage.getItem('ordenes_data')) || [
 ];
 
 // Función para controlar vistas y permisos según el rol activo
+// 1. Control centralizado de permisos y actualización de la interfaz
 function aplicarPermisosPorRol() {
-    // 1. Obtener el rol guardado en localStorage o la variable global
-    const rolActual = localStorage.getItem("rolUsuario") || rolUsuarioActual || "Supervisor";
-    const esTecnico = (rolActual === "Técnico");
+    // Determinar el rol actual (desde la variable global o localStorage)
+    const rolActual = window.rolUsuarioActual || localStorage.getItem('user_role') || "Supervisor";
+    const email = localStorage.getItem('user_email') || "harold.abaunzaque@unipaz.edu.co";
+    const esTecnico = (rolActual === "Técnico" || rolActual === "Tecnico");
 
-    // 2. Ocultar o mostrar el botón de "Guardar y Notificar Orden"
-    const btnGuardarOrden = document.querySelector("#formOrden button[type='submit']");
-    if (btnGuardarOrden) {
-        btnGuardarOrden.style.display = esTecnico ? "none" : "inline-block";
+    // A. Actualizar la insignia (badge) del rol en el encabezado superior
+    const badge = document.getElementById("userBadgeRole");
+    if (badge) {
+        badge.innerHTML = `Rol: <b>${rolActual}</b> <span style="font-size:0.85em; opacity:0.85;">(${email})</span>`;
     }
 
-    // 3. Ocultar o mostrar el botón de "Agregar Técnico"
-    const btnAgregarTecnico = document.getElementById("btnAbrirModalTecnico") || document.querySelector("button[onclick*='modalTecnico']");
+    // B. Formulario de Agendamiento de Órdenes: VISIBLE para Supervisor, OCULTO para Técnico
+    const formCard = document.getElementById("formOrden") || document.querySelector("#tab-ordenes .card:first-child");
+    if (formCard) {
+        formCard.style.display = esTecnico ? "none" : "block";
+    }
+
+    // C. Botón "+ Agregar Técnico": VISIBLE para Supervisor, OCULTO para Técnico
+    const btnAgregarTecnico = document.getElementById("btnAbrirModalTecnico") || 
+                              document.querySelector("button[onclick*='Modal']", "button[onclick*='tecnico']");
     if (btnAgregarTecnico) {
         btnAgregarTecnico.style.display = esTecnico ? "none" : "inline-block";
     }
 
-    // 4. Bloquear/desbloquear los inputs del formulario para el Técnico
-    const formOrden = document.getElementById("formOrden");
-    if (formOrden) {
-        const elementos = formOrden.querySelectorAll("input, select, textarea");
-        elementos.forEach(elem => {
-            if (esTecnico) {
-                elem.setAttribute("disabled", "true");
-            } else {
-                elem.removeAttribute("disabled");
-            }
+    // D. Ocultar o mostrar los botones de edición y eliminación en todas las tarjetas de técnicos
+    const accionesTecnicos = document.querySelectorAll(".card-tecnico-actions, .card-actions");
+    accionesTecnicos.forEach(el => {
+        el.style.display = esTecnico ? "none" : "flex";
+    });
+
+    // E. Deshabilitar/habilitar controles si fuera necesario
+    const inputsForm = document.querySelectorAll("#formOrden input, #formOrden select, #formOrden textarea, #formOrden button");
+    inputsForm.forEach(input => {
+        if (esTecnico) {
+            input.setAttribute("disabled", "true");
+        } else {
+            input.removeAttribute("disabled");
+        }
+    });
+
+    // F. Re-renderizar técnicos para refrescar las tarjetas
+    if (typeof listaTecnicos !== 'undefined' && typeof renderizarTecnicos === 'function') {
+        renderizarTecnicos(listaTecnicos);
+    }
+}
+
+// 2. Función de ingreso directo al iniciar sesión
+window.ejecutarIngresoDirecto = function() {
+    const roleElem = document.getElementById("loginRole") || document.querySelector("select[name='role']");
+    const emailElem = document.getElementById("loginEmail") || document.querySelector("input[type='email']");
+
+    const role = roleElem ? roleElem.value : "Técnico";
+    const email = emailElem ? emailElem.value : "harold.abaunzaque@unipaz.edu.co";
+
+    // Asignar rol y correo a variables globales y localStorage
+    window.rolUsuarioActual = role;
+    localStorage.setItem('user_role', role);
+    localStorage.setItem('user_email', email);
+
+    // Ocultar modal/overlay de inicio de sesión
+    const overlay = document.getElementById("loginOverlay");
+    if (overlay) overlay.style.display = "none";
+    document.body.classList.remove("not-logged-in");
+
+    // Aplicar los permisos correspondientes de forma inmediata
+    aplicarPermisosPorRol();
+
+    if (window.Swal) {
+        Swal.fire({
+            title: '¡Bienvenido!',
+            text: `Sesión iniciada como ${role}`,
+            icon: 'success',
+            timer: 1200,
+            showConfirmButton: false
         });
     }
-
-    // 5. Ocultar botones de acción (eliminar/editar) en la tabla si es Técnico
-    const btnesEliminar = document.querySelectorAll(".btn-action-icon, .btn-eliminar");
-    btnesEliminar.forEach(btn => {
-        btn.style.display = esTecnico ? "none" : "inline-block";
-    });
-}
-document.addEventListener("DOMContentLoaded", () => {
-    cargarSelectTecnicos();
-    renderizarTecnicos(listaTecnicos);
-    renderizarOrdenes();
-    aplicarPermisosPorRol();
-});
+};
 
 // ==========================================
 // 1. INICIALIZACIÓN DEL MAPA LEAFLET
