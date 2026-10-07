@@ -196,6 +196,47 @@ window.ejecutarIngresoDirecto = function(e) {
     // Aplicar permisos inmediatamente con el nuevo rol
     aplicarPermisosPorRol();
 
+  if (window.Swal) {
+        Swal.fire({
+            title: '¡Bienvenido!',
+            text: `Sesión iniciada como ${role}`,
+            icon: 'success',
+            timer: 1300,
+            showConfirmButton: false
+        });
+    }
+};
+
+// 1. Función de ingreso al iniciar sesión
+window.ejecutarIngresoDirecto = function(e) {
+    if (e && e.preventDefault) e.preventDefault();
+
+    const emailInput = document.getElementById("loginEmail") || document.querySelector("input[type='email']");
+    const roleSelect = document.getElementById("loginRole") || document.querySelector("select");
+
+    const email = emailInput ? emailInput.value.trim() : "";
+    const role = roleSelect ? roleSelect.value : "";
+
+    if (!email || !role || role.includes("--")) {
+        if (window.Swal) Swal.fire('Atención', 'Por favor ingresa tu correo y selecciona un rol.', 'warning');
+        else alert('Por favor ingresa tu correo y selecciona un rol.');
+        return;
+    }
+
+    // Guardar credenciales
+    window.rolUsuarioActual = role;
+    window.correoUsuarioActual = email;
+    localStorage.setItem('user_role', role);
+    localStorage.setItem('user_email', email);
+
+    // Ocultar Modal
+    const overlay = document.getElementById("loginOverlay");
+    if (overlay) overlay.style.display = "none";
+    document.body.classList.remove("not-logged-in");
+
+    // Aplicar permisos
+    aplicarPermisosPorRol();
+
     if (window.Swal) {
         Swal.fire({
             title: '¡Bienvenido!',
@@ -207,49 +248,45 @@ window.ejecutarIngresoDirecto = function(e) {
     }
 };
 
-// 2. Control de visibilidad según el Rol
+// 2. Función para aplicar permisos según el rol
 function aplicarPermisosPorRol() {
     const rolActual = window.rolUsuarioActual || localStorage.getItem('user_role') || "Supervisor";
-    const email = localStorage.getItem('user_email') || "";
+    const emailActual = window.correoUsuarioActual || localStorage.getItem('user_email') || "";
     const esTecnico = (rolActual === "Técnico" || rolActual === "Tecnico");
 
-    // A. Actualizar texto e identificación superior derecha (Badge)
-    // Busca por id o por clase contenedora
-    const badgeContainer = document.querySelector(".user-badge") || document.querySelector(".header-user") || document.getElementById("userBadgeRole");
-    if (badgeContainer) {
-        badgeContainer.innerHTML = `
-            <div style="text-align: right; line-height: 1.2;">
-                <span style="font-size: 0.85em; opacity: 0.9;">Rol: <b>${rolActual}</b></span><br>
-                <small style="font-size: 0.75em; opacity: 0.75;">${email}</small>
-            </div>
-        `;
+    // Re-renderizar técnicos si existe la función
+    if (typeof listaTecnicos !== 'undefined' && typeof renderizarTecnicos === 'function') {
+        renderizarTecnicos(listaTecnicos);
     }
 
-    // B. Formulario de Agendamiento de Órdenes (Crear Órdenes)
-    // HABILITADO / VISIBLE para Supervisor | OCULTO para Técnico
-    const formOrden = document.getElementById("formOrden");
-    if (formOrden) {
-        const contenedorForm = formOrden.closest('.card') || formOrden;
-        contenedorForm.style.display = esTecnico ? "none" : "block";
+    // Actualizar Header
+    const roleElem = document.getElementById("userRoleDisplay");
+    const emailElem = document.getElementById("userEmailDisplay");
+
+    if (roleElem) roleElem.textContent = rolActual;
+    if (emailElem) emailElem.textContent = emailActual ? `(${emailActual})` : "";
+
+    // Ocultar o mostrar formulario de Agendamiento
+    const cardSupervisor = document.querySelector(".card-box.supervisor-only") || 
+                           document.getElementById("formOrden")?.closest('.card') || 
+                           document.getElementById("formOrden");
+                           
+    if (cardSupervisor) {
+        cardSupervisor.style.display = esTecnico ? "none" : "block";
     }
 
-    // C. Botón "+ Agregar Técnico"
-    // VISIBLE para Supervisor | OCULTO para Técnico
-    const btnAgregarTecnico = document.getElementById("btnAbrirModalTecnico") || document.querySelector("button[onclick*='Modal']");
+    // Ocultar o mostrar botón "+ Agregar Técnico"
+    const btnAgregarTecnico = document.getElementById("btnAbrirModalTecnico") || 
+                              document.querySelector("button[onclick*='Modal']");
     if (btnAgregarTecnico) {
         btnAgregarTecnico.style.display = esTecnico ? "none" : "inline-block";
     }
 
-    // D. Botones de Edición y Eliminación en las Tarjetas de Técnicos
-    const accionesTecnicos = document.querySelectorAll(".card-tecnico-actions, .btn-action-icon");
+    // Ocultar o mostrar acciones de edición/eliminación
+    const accionesTecnicos = document.querySelectorAll(".card-tecnico-actions, .btn-action-icon, .btn-editar, .btn-eliminar");
     accionesTecnicos.forEach(el => {
         el.style.display = esTecnico ? "none" : "inline-flex";
     });
-
-    // E. Refrescar listado si la función existe
-    if (typeof listaTecnicos !== 'undefined' && typeof renderizarTecnicos === 'function') {
-        renderizarTecnicos(listaTecnicos);
-    }
 }
 
 // ==========================================
