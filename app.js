@@ -624,36 +624,58 @@ function eliminarOrden(idOrden) {
 }
 
 function enviarNotificacionEmail(orden) {
-    // 1. Inicia EmailJS con tu Public Key
-    const publicKey = 'JE115492Tfv1050zg'; 
-    const serviceID = 'service_nzn02hp';
+    // 1. Mostrar estado de envío
+    Swal.fire({
+        title: 'Enviando correo...',
+        text: 'Por favor espera mientras se notifica al técnico.',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    // 2. Tu Public Key de EmailJS
+    const publicKey = 'JE11549ZTfvlO5Ozg'; 
+    const serviceID = 'service_nzn02hp'; 
     const templateID = 'template_uadyeyr'; 
 
     if (typeof emailjs !== 'undefined') {
         emailjs.init(publicKey);
 
+        // Nombres de variables coincidentes con tu plantilla de la imagen
         const templateParams = {
             to_email: orden.correo,
             tecnico_nombre: orden.tecnico,
-            estacion: orden.estacion,
+            equipo_estacion: orden.estacion,
             tipo_mantenimiento: orden.tipo,
-            fecha: orden.fecha,
-            hora: orden.hora,
-            jornada: orden.jornada
+            jornada_trabajo: orden.jornada,
+            fecha_mantenimiento: orden.fecha,
+            hora_mantenimiento: orden.hora
         };
 
         emailjs.send(serviceID, templateID, templateParams)
             .then((response) => {
                 console.log('Correo enviado con éxito:', response.status, response.text);
-                Swal.fire('¡Éxito!', 'Orden guardada y correo enviado por EmailJS.', 'success');
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Orden Guardada y Notificada!',
+                    text: `Se ha enviado el correo automáticamente a ${orden.correo}`
+                });
             })
             .catch((error) => {
                 console.error('Error enviando con EmailJS:', error);
-                // Si falla EmailJS, usa el respaldo directo mailto:
-                abrirCorreoRespaldo(orden);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error al enviar correo',
+                    text: `Revisa tu Service ID en EmailJS: ${error.text || JSON.stringify(error)}`
+                });
             });
     } else {
-        abrirCorreoRespaldo(orden);
+        Swal.fire({
+            icon: 'error',
+            title: 'Librería no cargada',
+            text: 'No se encontró el SDK de EmailJS en index.html'
+        });
     }
 }
 
