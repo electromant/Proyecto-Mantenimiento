@@ -747,37 +747,100 @@ function abrirCorreoRespaldo(orden) {
 
 // DIRECTORIO DE TÉCNICOS
    
+// 1. Renderizar técnicos ocultando botones si es rol Técnico
 function renderizarTecnicos(lista) {
-    const grid = document.getElementById("gridTecnicos");
-    if (!grid) return;
-    grid.innerHTML = "";
+    const contenedor = document.getElementById("contenedorTecnicos");
+    if (!contenedor) return;
 
-    const esTecnico = (rolUsuarioActual === "Técnico");
+    const rolActual = rolUsuarioActual || localStorage.getItem('user_role') || "Supervisor";
+    const esTecnico = (rolActual === "Técnico" || rolActual === "Tecnico");
 
-    lista.forEach(tec => {
-        const card = document.createElement("div");
-        card.className = "card-tecnico";
-
-        // Muestra los botones de edición solo si es Supervisor
-        const accionesHtml = esTecnico ? '' : `
-            <div class="card-tecnico-actions">
-                <button class="btn-action-icon" onclick="editarTecnico('${tec.id}')" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                <button class="btn-action-icon delete" onclick="eliminarTecnico('${tec.id}')" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
+    contenedor.innerHTML = "";
+    lista.forEach(t => {
+        // Si es Técnico, no renderiza los botones de editar ni eliminar
+        const accionesHTML = esTecnico ? "" : `
+            <div class="card-actions" style="position: absolute; top: 10px; right: 10px;">
+                <button onclick="editarTecnico('${t.id}')" class="btn-action-icon" style="border:none; background:none; cursor:pointer;"><i class="fa-solid fa-pen" style="color:#e67e22;"></i></button>
+                <button onclick="eliminarTecnico('${t.id}')" class="btn-action-icon" style="border:none; background:none; cursor:pointer;"><i class="fa-solid fa-trash" style="color:#d32f2f;"></i></button>
             </div>
         `;
 
-        card.innerHTML = `
-            ${accionesHtml}
-            <img src="${tec.foto}" alt="${tec.nombre}" class="tecnico-img" onerror="this.src='https://via.placeholder.com/150'">
-            <h3>${tec.nombre}</h3>
-            <p class="especialidad">${tec.especialidad}</p>
-            <p class="info-item"><i class="fa-solid fa-envelope"></i> ${tec.correo}</p>
-            <p class="info-item"><i class="fa-solid fa-phone"></i> ${tec.telefono}</p>
-            <span class="badge-empresa">${tec.empresa}</span>
+        contenedor.innerHTML += `
+            <div class="card-tecnico" style="position: relative;">
+                ${accionesHTML}
+                <img src="${t.foto}" class="foto-tecnico" alt="${t.nombre}">
+                <h3>${t.nombre}</h3>
+                <p class="especialidad">${t.especialidad}</p>
+                <p><i class="fa-solid fa-cake-candles"></i> ${t.edad} años</p>
+                <p><i class="fa-solid fa-phone"></i> ${t.telefono}</p>
+                <p><i class="fa-solid fa-envelope"></i> ${t.correo}</p>
+                <span class="badge-empresa">${t.empresa}</span>
+            </div>
         `;
-        grid.appendChild(card);
     });
 }
+
+// 2. Control total de permisos y actualización de la barra superior
+function aplicarPermisosPorRol() {
+    const rolActual = rolUsuarioActual || localStorage.getItem('user_role') || "Supervisor";
+    const email = document.getElementById("loginEmail")?.value || localStorage.getItem('user_email') || "harold.abaunzaque@unipaz.edu.co";
+    const esTecnico = (rolActual === "Técnico" || rolActual === "Tecnico");
+
+    // Actualizar texto del badge superior derecho obligatoriamente
+    const badge = document.getElementById("userBadgeRole");
+    if (badge) {
+        badge.innerHTML = `Rol: <b>${rolActual}</b> (${email})`;
+    }
+
+    // Ocultar o mostrar formulario de creación de órdenes
+    const formCard = document.getElementById("formOrden") || document.querySelector("#tab-ordenes .card:first-child");
+    if (formCard) {
+        formCard.style.display = esTecnico ? "none" : "block";
+    }
+
+    // Ocultar o mostrar botón "+ Agregar Técnico"
+    const btnAgregarTecnico = document.getElementById("btnAbrirModalTecnico") || document.querySelector("button[onclick*='modalTecnico']");
+    if (btnAgregarTecnico) {
+        btnAgregarTecnico.style.display = esTecnico ? "none" : "inline-block";
+    }
+
+    // Re-renderizar técnicos para aplicar restricción en las tarjetas
+    if (typeof listaTecnicos !== 'undefined') {
+        renderizarTecnicos(listaTecnicos);
+    }
+}
+
+// 3. Inicio de sesión corregido
+window.ejecutarIngresoDirecto = function() {
+    const emailElem = document.getElementById("loginEmail");
+    const roleElem = document.getElementById("loginRole");
+
+    const email = emailElem ? emailElem.value : "harold.abaunzaque@unipaz.edu.co";
+    const role = roleElem ? roleElem.value : "Supervisor";
+
+    // Guardar variables globales y de persistencia
+    rolUsuarioActual = role;
+    localStorage.setItem('user_role', role);
+    localStorage.setItem('user_email', email);
+
+    // Ocultar Overlay
+    const overlay = document.getElementById("loginOverlay");
+    if (overlay) overlay.style.display = "none";
+    document.body.classList.remove("not-logged-in");
+
+    // Aplicar permisos inmediatamente
+    aplicarPermisosPorRol();
+
+    if (window.Swal) {
+        Swal.fire({
+            title: '¡Bienvenido!',
+            text: `Sesión iniciada como ${role}`,
+            icon: 'success',
+            timer: 1200,
+            showConfirmButton: false
+        });
+    }
+};
 
 function filtrarTecnicos() {
     const texto = document.getElementById("buscarTecnico").value.toLowerCase();
