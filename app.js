@@ -624,26 +624,31 @@ function eliminarOrden(idOrden) {
 }
 
 function enviarNotificacionEmail(orden) {
-    const serviceID = 'JE11549ZTfvlO5Ozg';
-    const templateID = 'template_uadyeyr';
+    // 1. Inicia EmailJS con tu Public Key
+    const publicKey = 'JE115492Tfv1050zg'; 
+    const serviceID = 'service_nzn02hp';
+    const templateID = 'template_uadyeyr'; 
 
-    const templateParams = {
-        to_email: orden.correo,
-        tecnico_nombre: orden.tecnico,
-        estacion: orden.estacion,
-        tipo_mantenimiento: orden.tipo,
-        fecha: orden.fecha,
-        hora: orden.hora,
-        jornada: orden.jornada
-    };
-
-    // Intenta enviar vía EmailJS
     if (typeof emailjs !== 'undefined') {
+        emailjs.init(publicKey);
+
+        const templateParams = {
+            to_email: orden.correo,
+            tecnico_nombre: orden.tecnico,
+            estacion: orden.estacion,
+            tipo_mantenimiento: orden.tipo,
+            fecha: orden.fecha,
+            hora: orden.hora,
+            jornada: orden.jornada
+        };
+
         emailjs.send(serviceID, templateID, templateParams)
-            .then(() => {
+            .then((response) => {
+                console.log('Correo enviado con éxito:', response.status, response.text);
                 Swal.fire('¡Éxito!', 'Orden guardada y correo enviado por EmailJS.', 'success');
             })
-            .catch(() => {
+            .catch((error) => {
+                console.error('Error enviando con EmailJS:', error);
                 // Si falla EmailJS, usa el respaldo directo mailto:
                 abrirCorreoRespaldo(orden);
             });
