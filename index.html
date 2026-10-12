@@ -25,49 +25,43 @@
 </head>
 <body class="not-logged-in">
 
-    <!-- Modal / Overlay de Login -->
-<div id="loginOverlay" class="login-overlay">
-    <div class="login-card">
-        <div class="login-header text-center">
-            <img src="logo-unipaz.png" alt="UNIPAZ" class="login-logo">
-            <img src="logo-ecopetrol.png" alt="ECOPETROL" class="login-logo">
-            <h2>Iniciar Sesión</h2>
-            <p>Gestión de Mantenimientos Electromecánicos</p>
+ <!-- Modal / Overlay de Login -->
+    <div id="loginOverlay" class="login-overlay">
+        <div class="login-card">
+            <div class="login-header text-center">
+                <img src="logo-unipaz.png" alt="UNIPAZ" class="login-logo">
+                <img src="logo-ecopetrol.png" alt="ECOPETROL" class="login-logo">
+                <h2>Iniciar Sesión</h2>
+                <p>Gestión de Mantenimientos Electromecánicos</p>
+            </div>
+
+            <form onsubmit="return ejecutarIngresoDirecto(event)">
+                <div class="form-group">
+                    <label for="loginEmail"><i class="fa-solid fa-envelope"></i> Correo Electrónico:</label>
+                    <input type="email" id="loginEmail" class="form-control" placeholder="ejemplo@unipaz.edu.co" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="loginPass"><i class="fa-solid fa-key"></i> Contraseña (Cédula):</label>
+                    <input type="password" id="loginPass" class="form-control" placeholder="••••••••" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="loginRole"><i class="fa-solid fa-user-shield"></i> Rol de Usuario:</label>
+                    <select id="loginRole" class="form-control" required>
+                        <option value="">-- Seleccione Rol --</option>
+                        <option value="Supervisor">Supervisor</option>
+                        <option value="Técnico">Técnico</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn-primary btn-block">
+                    <i class="fa-solid fa-right-to-bracket"></i> Ingresar
+                </button>
+            </form>
         </div>
-        
-        <form onsubmit="return ejecutarIngresoDirecto(event)">
-            <div class="form-group">
-                <label for="loginEmail"><i class="fa-solid fa-envelope"></i> Correo Electrónico:</label>
-                <input type="email" id="loginEmail" class="form-control" placeholder="ejemplo@unipaz.edu.co" required>
-            </div>
-
-            <div class="form-group">
-                <label for="loginPass"><i class="fa-solid fa-key"></i> Contraseña (Cédula):</label>
-                <input type="password" id="loginPass" class="form-control" placeholder="••••••••" required>
-            </div>
-<!-- Campo de Contraseña existente -->
-            <div class="form-group">
-                <label for="loginPass"><i class="fa-solid fa-key"></i> Contraseña</label>
-                <input type="password" id="loginPass" class="form-control" placeholder="••••••••" required>
-            </div>
-
-            <!-- AGREGAR ESTE BLOQUE DE ROL AQUÍ -->
-            <div class="form-group">
-                <label for="loginRole"><i class="fa-solid fa-user-shield"></i> Rol de Usuario</label>
-                <select id="loginRole" class="form-control" required>
-                    <option value="">-- Seleccione Rol --</option>
-                    <option value="Supervisor">Supervisor</option>
-                    <option value="Técnico">Técnico</option>
-                </select>
-            </div>
-
-            <button type="submit" class="btn-primary btn-block">
-                <i class="fa-solid fa-right-to-bracket"></i> Ingresar
-            </button>
-        </form>
     </div>
-</div>
-
+    
     <!-- NAVEGACIÓN SUPERIOR / NAVBAR -->
     <header style="background-color: #004d40; color: white; padding: 12px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
         
