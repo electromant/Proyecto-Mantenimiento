@@ -354,55 +354,81 @@ window.cambiarPestana = window.cambiarTab = function(tabName, element) {
 window.ejecutarIngresoDirecto = function(e) {
     if (e && e.preventDefault) e.preventDefault();
 
-    const emailInput = document.getElementById("loginEmail") || document.querySelector("input[type='email']");
-    const roleSelect = document.getElementById("loginRole") || document.querySelector("select");
+    try {
+        const emailInput = document.getElementById("loginEmail") || document.querySelector("input[type='email']");
+        const passInput = document.getElementById("loginPass") || document.querySelector("input[type='password']");
 
-    const email = emailInput ? emailInput.value.trim() : "";
-    let role = roleSelect ? roleSelect.value : "";
+        const email = emailInput ? emailInput.value.trim().toLowerCase() : "";
+        const pass = passInput ? passInput.value.trim() : "";
 
-    // Si no hay select en el HTML o vino vacío, fallback por defecto a Supervisor
-    if (!role || role.includes("--")) {
-        role = "Supervisor";
-    }
-
-    if (!email) {
-        if (window.Swal) {
-            Swal.fire('Atención', 'Por favor ingresa un correo válido.', 'warning');
-        } else {
-            alert('Por favor ingresa un correo válido.');
+        if (!email) {
+            alert('Por favor ingresa tu correo electrónico.');
+            return false;
         }
-        return false;
-    }
 
-    // Normalizar rol
-    const esTec = role.toLowerCase().includes("tec") || role.toLowerCase().includes("téc");
-    const rolFinal = esTec ? "Técnico" : "Supervisor";
+        let rolDetectado = "Técnico";
 
-    // Guardar credenciales
-    window.rolUsuarioActual = rolFinal;
-    window.correoUsuarioActual = email;
-    localStorage.setItem('user_role', rolFinal);
-    localStorage.setItem('user_email', email);
+        // 1. El ÚNICO Supervisor Principal Maestro es Harold Abaunzaque
+        if (email === "harold.abaunzaque@unipaz.edu.co") {
+            rolDetectado = "Supervisor";
+        } 
+        else {
+            // Cargar datos guardados en localStorage para buscar el usuario registrado
+            const datosGuardados = localStorage.getItem('tecnicos_data') || localStorage.getItem('lista_tecnicos');
+            let listaActual = (typeof listaTecnicos !== 'undefined' && Array.isArray(listaTecnicos)) ? listaTecnicos : [];
+            
+            if (datosGuardados) {
+                try {
+                    listaActual = JSON.parse(datosGuardados);
+                } catch(err) {}
+            }
 
-    // Aplicar restricciones
-    if (typeof aplicarPermisosPorRol === 'function') {
-        aplicarPermisosPorRol();
-    }
+            // 2. Buscar si el usuario fue registrado en la lista de personal
+            const usuarioEncontrado = listaActual.find(t => 
+                t && ((t.correo && t.correo.toLowerCase() === email) || (t.cedula && t.cedula.toString() === pass))
+            );
 
-    // Ocultar pantalla de login
-    const overlay = document.getElementById("loginOverlay");
-    if (overlay) overlay.style.display = "none";
-    document.body.classList.remove("not-logged-in");
+            if (usuarioEncontrado) {
+                rolDetectado = usuarioEncontrado.rol || "Técnico";
+            } else if (typeof SUPERVISORES !== 'undefined' && Array.isArray(SUPERVISORES)) {
+                // 3. Buscar en lista adicional de supervisores si no está en técnicos
+                const esSup = SUPERVISORES.some(s => s && (s.email || s.correo || "").toLowerCase() === email);
+                if (esSup) rolDetectado = "Supervisor";
+            }
+        }
 
-    // Alerta de bienvenida
-    if (window.Swal) {
-        Swal.fire({
-            title: '¡Bienvenido!',
-            text: `Sesión iniciada como ${rolFinal}`,
-            icon: 'success',
-            timer: 1300,
-            showConfirmButton: false
-        });
+        // Guardar sesión activa
+        window.rolUsuarioActual = rolDetectado;
+        window.correoUsuarioActual = email;
+        localStorage.setItem('user_role', rolDetectado);
+        localStorage.setItem('user_email', email);
+
+        // OCULTAR LOGIN
+        const overlay = document.getElementById("loginOverlay");
+        if (overlay) overlay.style.setProperty("display", "none", "important");
+        document.body.classList.remove("not-logged-in");
+
+        // Aplicar los permisos correspondientes al rol en la interfaz
+        if (typeof aplicarPermisosPorRol === 'function') {
+            aplicarPermisosPorRol();
+        }
+
+        // Notificación de bienvenida
+        if (window.Swal) {
+            Swal.fire({
+                title: '¡Bienvenido!',
+                text: `Sesión iniciada como ${rolDetectado}`,
+                icon: 'success',
+                timer: 1300,
+                showConfirmButton: false
+            });
+        }
+
+    } catch (err) {
+        console.error("Error en login:", err);
+        const overlay = document.getElementById("loginOverlay");
+        if (overlay) overlay.style.display = "none";
+        document.body.classList.remove("not-logged-in");
     }
 
     return false;
@@ -1183,91 +1209,6 @@ function cargarArchivoFotoModal(event) {
         };
         reader.readAsDataURL(file);
     }
-}
-
-// Función principal de Guardar Técnico
-function guardarTecnicoModal(event) {
-    // 1. Detener la recarga por defecto del formulario
-    if (event) {
-        event.preventDefault();
-        event.stopPropagation();
-    }
-
-    try {
-        // 2. Obtener valores con fallback para evitar errores si un ID falta
-        const idInput = document.getElementById("modalTecnicoId")?.value || "";
-        const cedula = document.getElementById("modalTecnicoCedula")?.value.trim() || "";
-        const correo = document.getElementById("modalTecnicoCorreo")?.value.trim().toLowerCase() || "";
-        const rol = document.getElementById("modalTecnicoRol")?.value || "Técnico";
-        const nombre = document.getElementById("modalTecnicoNombre")?.value.trim() || "";
-        const telefono = document.getElementById("modalTecnicoTelefono")?.value.trim() || "";
-        const especialidad = document.getElementById("modalTecnicoEspecialidad")?.value.trim() || "";
-        
-        // Obtener foto desde la URL/Base64 o la vista previa
-        const fotoInput = document.getElementById("modalTecnicoFoto")?.value.trim();
-        const foto = fotoInput || window.fotoTecnicoTemporal || "https://via.placeholder.com/150";
-
-        if (!nombre || !correo) {
-            alert("Por favor complete los campos obligatorios (Nombre y Correo).");
-            return false;
-        }
-
-        // 3. Obtener lista actual de técnicos de localStorage
-        let listaTecnicos = JSON.parse(localStorage.getItem('lista_tecnicos')) || window.listaTecnicos || [];
-
-        if (idInput) {
-            // Actualizar existente
-            const index = listaTecnicos.findIndex(t => String(t.id) === String(idInput) || String(t.cedula) === String(idInput));
-            if (index !== -1) {
-                listaTecnicos[index] = { ...listaTecnicos[index], cedula, correo, rol, nombre, telefono, especialidad, foto };
-            }
-        } else {
-            // Crear nuevo
-            const nuevoTecnico = {
-                id: cedula || Date.now().toString(),
-                cedula: cedula,
-                correo: correo,
-                rol: rol,
-                nombre: nombre,
-                telefono: telefono,
-                especialidad: especialidad,
-                foto: foto
-            };
-            listaTecnicos.push(nuevoTecnico);
-        }
-
-        // 4. Guardar en localStorage y variable global
-        localStorage.setItem('lista_tecnicos', JSON.stringify(listaTecnicos));
-        window.listaTecnicos = listaTecnicos;
-
-        // 5. Renderizar vista de directorio si la función existe
-        if (typeof renderizarTecnicos === 'function') {
-            renderizarTecnicos(listaTecnicos);
-        } else if (typeof renderizarDirectorio === 'function') {
-            renderizarDirectorio();
-        }
-
-        // 6. Actualizar desplegables de selección
-        if (typeof cargarTecnicosEnSelects === 'function') {
-            cargarTecnicosEnSelects();
-        }
-
-        // 7. Cerrar modal y limpiar
-        cerrarModalTecnico();
-
-        // 8. Notificación
-        if (window.Swal) {
-            Swal.fire('¡Éxito!', `El usuario ${nombre} fue guardado correctamente.`, 'success');
-        } else {
-            alert(`Técnico ${nombre} guardado con éxito.`);
-        }
-
-    } catch (error) {
-        console.error("Error al guardar el técnico:", error);
-        alert("Ocurrió un error al guardar. Revisa la consola (F12).");
-    }
-
-    return false;
 }
 
 // ==========================================
