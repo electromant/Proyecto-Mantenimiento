@@ -884,42 +884,6 @@ function aplicarPermisosPorRol() {
         el.style.display = esTecnico ? "none" : "";
     });
 }
-
-window.aplicarPermisosPorRol = aplicarPermisosPorRol;
-
-    // 4. Guardar en localStorage inmediatamente
-    window.rolUsuarioActual = role;
-    window.correoUsuarioActual = email;
-    localStorage.setItem('user_role', role);
-    localStorage.setItem('user_email', email);
-
-    // 5. Aplicar visibilidad de permisos inmediatamente según el ROL SELECCIONADO
-    if (typeof aplicarPermisosPorRol === 'function') {
-        aplicarPermisosPorRol();
-    }
-
-    // 6. Ocultar pantalla de login
-    const overlay = document.getElementById("loginOverlay");
-    if (overlay) overlay.style.display = "none";
-    document.body.classList.remove("not-logged-in");
-
-    // 7. Notificación
-    if (window.Swal) {
-        Swal.fire({
-            title: '¡Bienvenido!',
-            text: `Sesión iniciada como ${role}`,
-            icon: 'success',
-            timer: 1300,
-            showConfirmButton: false
-        }).then(() => {
-            if (typeof aplicarPermisosPorRol === 'function') {
-                aplicarPermisosPorRol();
-            }
-        });
-    }
-
-    return false;
-};
     
 function cerrarModalTecnico() {
     document.getElementById("modalTecnico").style.display = "none";
