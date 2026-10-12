@@ -160,38 +160,69 @@ document.addEventListener("DOMContentLoaded", function() {
 window.ejecutarIngresoDirecto = function(e) {
     if (e && e.preventDefault) e.preventDefault();
 
-    const emailInput = document.getElementById("loginEmail") || document.querySelector("input[type='email']");
-    const roleSelect = document.getElementById("loginRole") || document.querySelector("select");
+    try {
+        const emailInput = document.getElementById("loginEmail") || document.querySelector("input[type='email']");
+        const passInput = document.getElementById("loginPass") || document.querySelector("input[type='password']");
 
-    const email = emailInput ? emailInput.value.trim() : "";
-    const role = roleSelect ? roleSelect.value : "";
+        const email = emailInput ? emailInput.value.trim().toLowerCase() : "";
+        const pass = passInput ? passInput.value.trim() : "";
 
-    if (!email || !role || role.includes("--")) {
-        if (window.Swal) Swal.fire('Atención', 'Por favor ingresa tu correo y selecciona un rol.', 'warning');
-        else alert('Por favor ingresa tu correo y selecciona un rol.');
-        return;
+        if (!email) {
+            alert('Por favor ingresa tu correo electrónico.');
+            return false;
+        }
+
+        let rolDetectado = "Técnico";
+
+        // 1. Validar Supervisor Principal y variaciones
+        if (email.includes("harold") || email.includes("abaunza") || email.includes("santiagoque") || email.includes("admin") || email.includes("super")) {
+            rolDetectado = "Supervisor";
+        } 
+        // 2. Validar lista global de SUPERVISORES
+        else if (typeof SUPERVISORES !== 'undefined' && Array.isArray(SUPERVISORES)) {
+            const esSup = SUPERVISORES.some(s => s && (s.email || s.correo || "").toLowerCase() === email);
+            if (esSup) rolDetectado = "Supervisor";
+        } 
+        // 3. Validar lista global de TÉCNICOS
+        else if (typeof listaTecnicos !== 'undefined' && Array.isArray(listaTecnicos)) {
+            const tec = listaTecnicos.find(t => t && ((t.correo || t.email || "").toLowerCase() === email || (t.cedula && t.cedula.toString() === pass)));
+            if (tec) rolDetectado = tec.rol || "Técnico";
+        }
+
+        // Guardar sesión
+        window.rolUsuarioActual = rolDetectado;
+        window.correoUsuarioActual = email;
+        localStorage.setItem('user_role', rolDetectado);
+        localStorage.setItem('user_email', email);
+
+        // OCULTAR PANTALLA DE LOGIN
+        const overlay = document.getElementById("loginOverlay");
+        if (overlay) overlay.style.setProperty("display", "none", "important");
+        document.body.classList.remove("not-logged-in");
+
+        // Aplicar permisos
+        if (typeof aplicarPermisosPorRol === 'function') {
+            aplicarPermisosPorRol();
+        }
+
+        if (window.Swal) {
+            Swal.fire({
+                title: '¡Bienvenido!',
+                text: `Sesión iniciada como ${rolDetectado}`,
+                icon: 'success',
+                timer: 1200,
+                showConfirmButton: false
+            });
+        }
+
+    } catch (err) {
+        console.error("Error en login:", err);
+        const overlay = document.getElementById("loginOverlay");
+        if (overlay) overlay.style.display = "none";
+        document.body.classList.remove("not-logged-in");
     }
 
-    // Guardar credenciales
-    window.rolUsuarioActual = role;
-    window.correoUsuarioActual = email;
-    localStorage.setItem('user_role', role);
-    localStorage.setItem('user_email', email);
-
-    // Ocultar Modal
-    const overlay = document.getElementById("loginOverlay");
-    if (overlay) overlay.style.display = "none";
-    document.body.classList.remove("not-logged-in");
-
-    if (window.Swal) {
-        Swal.fire({
-            title: '¡Bienvenido!',
-            text: `Sesión iniciada como ${role}`,
-            icon: 'success',
-            timer: 1300,
-            showConfirmButton: false
-        });
-    }
+    return false;
 };
 
 // ==========================================
@@ -855,29 +886,6 @@ function aplicarPermisosPorRol() {
 }
 
 window.aplicarPermisosPorRol = aplicarPermisosPorRol;
-
-window.ejecutarIngresoDirecto = function(e) {
-    if (e && e.preventDefault) e.preventDefault();
-
-    // 1. Detectar inputs del login
-    const emailInput = document.getElementById("loginEmail") || 
-                       document.querySelector("#loginOverlay input[type='email']") || 
-                       document.querySelector("input[type='email']");
-                       
-    const roleSelect = document.getElementById("loginRole") || 
-                       document.getElementById("rol") || 
-                       document.querySelector("#loginOverlay select") || 
-                       document.querySelector("select");
-
-    // 2. Capturar valores reales seleccionados por el usuario
-    const email = emailInput ? emailInput.value.trim() : "";
-    const role = roleSelect ? roleSelect.value : "";
-
-    // 3. Validación
-    if (!email || !role || role.includes("--")) {
-        alert("Por favor ingresa un correo válido y selecciona un rol.");
-        return false;
-    }
 
     // 4. Guardar en localStorage inmediatamente
     window.rolUsuarioActual = role;
