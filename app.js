@@ -81,75 +81,83 @@ let listaOrdenes = JSON.parse(localStorage.getItem('ordenes_data')) || [
 window.ejecutarIngresoDirecto = function(e) {
     if (e && e.preventDefault) e.preventDefault();
 
-    // 1. Obtener entradas
-    const emailInput = document.getElementById("loginEmail") || document.querySelector("input[type='email']");
-    const passInput = document.getElementById("loginPass") || document.querySelector("input[type='password']");
+    try {
+        const emailInput = document.getElementById("loginEmail") || document.querySelector("input[type='email']");
+        const passInput = document.getElementById("loginPass") || document.querySelector("input[type='password']");
 
-    const email = emailInput ? emailInput.value.trim().toLowerCase() : "";
-    const pass = passInput ? passInput.value.trim() : "";
+        const email = emailInput ? emailInput.value.trim().toLowerCase() : "";
+        const pass = passInput ? passInput.value.trim() : "";
 
-    if (!email) {
-        if (window.Swal) Swal.fire('Atención', 'Por favor ingresa tu correo electrónico.', 'warning');
-        else alert('Por favor ingresa tu correo electrónico.');
-        return false;
-    }
-
-    let rolDetectado = null;
-
-    // A. Verificar si el correo pertenece a la lista de Supervisores
-    const esSupervisor = typeof SUPERVISORES !== 'undefined' && SUPERVISORES.some(sup => sup.email.toLowerCase() === email);
-
-    if (esSupervisor) {
-        rolDetectado = "Supervisor";
-    } else {
-        // B. Verificar si el correo o la cédula coinciden con la lista de Técnicos
-        const tecnicos = typeof listaTecnicos !== 'undefined' ? listaTecnicos : [];
-        const tecnicoEncontrado = tecnicos.find(t => 
-            (t.correo && t.correo.toLowerCase() === email) || 
-            (t.cedula && t.cedula.toString() === pass)
-        );
-
-        if (tecnicoEncontrado) {
-            rolDetectado = "Técnico";
+        if (!email) {
+            if (window.Swal) Swal.fire('Atención', 'Por favor ingresa tu correo electrónico.', 'warning');
+            else alert('Por favor ingresa tu correo electrónico.');
+            return false;
         }
-    }
 
-    // C. Si no está en ninguna lista, se le asigna rol "Técnico" por defecto (Acceso Restringido)
-    // O si prefieres denegar acceso si no existe, puedes cambiarlo.
-    if (!rolDetectado) {
-        // Si el correo contiene palabras clave de administración o supervisor
-        if (email.includes("admin") || email.includes("super")) {
+        let rolDetectado = null;
+
+        // 1. Validar Supervisor Principal por defecto
+        if (email === "harold.abaunzaque@unipaz.edu.co") {
             rolDetectado = "Supervisor";
-        } else {
-            rolDetectado = "Técnico"; // Por seguridad, todo usuario no registrado entra como Técnico
         }
-    }
 
-    // 2. Guardar estado global y en localStorage
-    window.rolUsuarioActual = rolDetectado;
-    window.correoUsuarioActual = email;
-    localStorage.setItem('user_role', rolDetectado);
-    localStorage.setItem('user_email', email);
+        // 2. Validar si está en la lista global/almacenada de SUPERVISORES
+        if (!rolDetectado && typeof SUPERVISORES !== 'undefined') {
+            const esSup = SUPERVISORES.some(s => (s.email && s.email.toLowerCase() === email) || (s.correo && s.correo.toLowerCase() === email));
+            if (esSup) rolDetectado = "Supervisor";
+        }
 
-    // 3. Aplicar permisos restringidos / completos inmediatamente
-    if (typeof aplicarPermisosPorRol === 'function') {
-        aplicarPermisosPorRol();
-    }
+        // 3. Validar si está en la lista global/almacenada de TÉCNICOS
+        if (!rolDetectado && typeof listaTecnicos !== 'undefined') {
+            const tec = listaTecnicos.find(t => 
+                (t.correo && t.correo.toLowerCase() === email) || 
+                (t.cedula && t.cedula.toString() === pass)
+            );
+            if (tec) {
+                // Si el técnico registrado tiene un rol especificado (ej: Supervisor), asignarlo; si no, Técnico
+                rolDetectado = tec.rol || "Técnico";
+            }
+        }
 
-    // 4. Ocultar pantalla de login
-    const overlay = document.getElementById("loginOverlay");
-    if (overlay) overlay.style.display = "none";
-    document.body.classList.remove("not-logged-in");
+        // 4. Si es un usuario nuevo no encontrado en listas, asigna rol Técnico por defecto
+        if (!rolDetectado) {
+            rolDetectado = email.includes("admin") || email.includes("super") ? "Supervisor" : "Técnico";
+        }
 
-    // 5. Notificación personalizada de bienvenida
-    if (window.Swal) {
-        Swal.fire({
-            title: '¡Bienvenido!',
-            text: `Sesión iniciada como ${rolDetectado}`,
-            icon: 'success',
-            timer: 1300,
-            showConfirmButton: false
-        });
+        // 5. Guardar estado de sesión
+        window.rolUsuarioActual = rolDetectado;
+        window.correoUsuarioActual = email;
+        localStorage.setItem('user_role', rolDetectado);
+        localStorage.setItem('user_email', email);
+
+        // 6. Aplicar interfaz y permisos según el rol asignado
+        if (typeof aplicarPermisosPorRol === 'function') {
+            aplicarPermisosPorRol();
+        }
+
+        // 7. Ocultar pantalla de Login
+        const overlay = document.getElementById("loginOverlay");
+        if (overlay) {
+            overlay.style.setProperty("display", "none", "important");
+        }
+        document.body.classList.remove("not-logged-in");
+
+        // 8. Mensaje de Bienvenida
+        if (window.Swal) {
+            Swal.fire({
+                title: '¡Bienvenido!',
+                text: `Sesión iniciada como ${rolDetectado}`,
+                icon: 'success',
+                timer: 1300,
+                showConfirmButton: false
+            });
+        }
+
+    } catch (err) {
+        console.error("Error al ingresar:", err);
+        const overlay = document.getElementById("loginOverlay");
+        if (overlay) overlay.style.display = "none";
+        document.body.classList.remove("not-logged-in");
     }
 
     return false;
