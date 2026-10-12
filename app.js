@@ -81,26 +81,79 @@ let listaOrdenes = JSON.parse(localStorage.getItem('ordenes_data')) || [
 window.ejecutarIngresoDirecto = function(e) {
     if (e && e.preventDefault) e.preventDefault();
 
-    // Obtener inputs estrictos del modal de login
-    const emailInput = document.getElementById("loginEmail") || document.querySelector("#loginOverlay input[type='email']") || document.querySelector("input[type='email']");
-    const roleSelect = document.getElementById("loginRole") || document.querySelector("#loginOverlay select") || document.querySelector("select");
+    // 1. Obtener entradas
+    const emailInput = document.getElementById("loginEmail") || document.querySelector("input[type='email']");
+    const passInput = document.getElementById("loginPass") || document.querySelector("input[type='password']");
 
-    const email = emailInput ? emailInput.value.trim() : "";
-    const role = roleSelect ? roleSelect.value : "";
+    const email = emailInput ? emailInput.value.trim().toLowerCase() : "";
+    const pass = passInput ? passInput.value.trim() : "";
 
-    // VALIDACIÓN OBLIGATORIA: no permite ingresar si el correo está vacío o el rol es nulo/por defecto
-    if (!email || !role || role === "" || role.includes("--") || role.includes("Selecciona")) {
-        if (window.Swal) {
-            Swal.fire({
-                title: 'Campos requeridos',
-                text: 'Por favor ingresa tu correo electrónico y selecciona un rol válido.',
-                icon: 'warning'
-            });
-        } else {
-            alert('Por favor ingresa tu correo electrónico y selecciona un rol válido.');
-        }
+    if (!email) {
+        if (window.Swal) Swal.fire('Atención', 'Por favor ingresa tu correo electrónico.', 'warning');
+        else alert('Por favor ingresa tu correo electrónico.');
         return false;
     }
+
+    let rolDetectado = null;
+
+    // A. Verificar si el correo pertenece a la lista de Supervisores
+    const esSupervisor = typeof SUPERVISORES !== 'undefined' && SUPERVISORES.some(sup => sup.email.toLowerCase() === email);
+
+    if (esSupervisor) {
+        rolDetectado = "Supervisor";
+    } else {
+        // B. Verificar si el correo o la cédula coinciden con la lista de Técnicos
+        const tecnicos = typeof listaTecnicos !== 'undefined' ? listaTecnicos : [];
+        const tecnicoEncontrado = tecnicos.find(t => 
+            (t.correo && t.correo.toLowerCase() === email) || 
+            (t.cedula && t.cedula.toString() === pass)
+        );
+
+        if (tecnicoEncontrado) {
+            rolDetectado = "Técnico";
+        }
+    }
+
+    // C. Si no está en ninguna lista, se le asigna rol "Técnico" por defecto (Acceso Restringido)
+    // O si prefieres denegar acceso si no existe, puedes cambiarlo.
+    if (!rolDetectado) {
+        // Si el correo contiene palabras clave de administración o supervisor
+        if (email.includes("admin") || email.includes("super")) {
+            rolDetectado = "Supervisor";
+        } else {
+            rolDetectado = "Técnico"; // Por seguridad, todo usuario no registrado entra como Técnico
+        }
+    }
+
+    // 2. Guardar estado global y en localStorage
+    window.rolUsuarioActual = rolDetectado;
+    window.correoUsuarioActual = email;
+    localStorage.setItem('user_role', rolDetectado);
+    localStorage.setItem('user_email', email);
+
+    // 3. Aplicar permisos restringidos / completos inmediatamente
+    if (typeof aplicarPermisosPorRol === 'function') {
+        aplicarPermisosPorRol();
+    }
+
+    // 4. Ocultar pantalla de login
+    const overlay = document.getElementById("loginOverlay");
+    if (overlay) overlay.style.display = "none";
+    document.body.classList.remove("not-logged-in");
+
+    // 5. Notificación personalizada de bienvenida
+    if (window.Swal) {
+        Swal.fire({
+            title: '¡Bienvenido!',
+            text: `Sesión iniciada como ${rolDetectado}`,
+            icon: 'success',
+            timer: 1300,
+            showConfirmButton: false
+        });
+    }
+
+    return false;
+};
 
     // Guardar estado global y en almacenamiento local
     window.rolUsuarioActual = role;
