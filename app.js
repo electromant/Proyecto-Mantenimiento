@@ -288,39 +288,60 @@ function obtenerTecnicos() {
 
 // Editar técnico (soporta ID numérico y tipo String)
 window.editarTecnico = function(id) {
-    const tecnicos = obtenerTecnicos();
-    // Comparación flexible (==) para ignorar diferencias entre número y string
-    const index = tecnicos.findIndex(t => t.id == id);
-
-    if (index === -1) {
-        alert("Técnico no encontrado.");
+    // 1. Verificar permisos de Supervisor
+    if (window.rolUsuarioActual === "Técnico") {
+        if (window.Swal) Swal.fire('Acceso denegado', 'No tienes permisos para editar técnicos.', 'error');
         return;
     }
 
-    const tec = tecnicos[index];
-    const nuevoNombre = prompt("Editar Nombre:", tec.nombre);
-    if (nuevoNombre === null) return;
+    // 2. Obtener lista actualizada desde localStorage
+    const datosGuardados = localStorage.getItem('tecnicos_data') || localStorage.getItem('lista_tecnicos');
+    let listaActual = (typeof listaTecnicos !== 'undefined' && Array.isArray(listaTecnicos)) ? listaTecnicos : [];
+    if (datosGuardados) {
+        try { listaActual = JSON.parse(datosGuardados); } catch(e) {}
+    }
 
-    const nuevoCargo = prompt("Editar Cargo/Especialidad:", tec.cargo || "");
-    if (nuevoCargo === null) return;
+    // 3. Buscar el técnico por ID
+    const tec = listaActual.find(t => t.id == id || t.correo == id);
+    if (!tec) {
+        console.error("No se encontró el técnico con ID:", id);
+        return;
+    }
 
-    const nuevoCorreo = prompt("Editar Correo:", tec.correo || "");
-    if (nuevoCorreo === null) return;
+    // 4. Llenar los campos del modal (Soporta IDs estándar y modalTecnico...)
+    const setFieldValue = (id1, id2, valor) => {
+        const el = document.getElementById(id1) || document.getElementById(id2);
+        if (el) el.value = valor || "";
+    };
 
-    const nuevoTelefono = prompt("Editar Teléfono:", tec.telefono || "");
-    if (nuevoTelefono === null) return;
+    setFieldValue("tecnicoId", "modalTecnicoId", tec.id || "");
+    setFieldValue("tecCedula", "modalTecnicoCedula", tec.cedula || "");
+    setFieldValue("tecNombre", "modalTecnicoNombre", tec.nombre || "");
+    setFieldValue("tecCorreo", "modalTecnicoCorreo", tec.correo || "");
+    setFieldValue("tecTelefono", "modalTecnicoTelefono", tec.telefono || "");
+    setFieldValue("tecEspecialidad", "modalTecnicoEspecialidad", tec.especialidad || "");
+    setFieldValue("tecFotoUrl", "modalTecnicoFotoUrl", tec.foto || "");
 
-    // Actualizar campos
-    tecnicos[index].nombre = nuevoNombre;
-    tecnicos[index].cargo = nuevoCargo;
-    tecnicos[index].correo = nuevoCorreo;
-    tecnicos[index].telefono = nuevoTelefono;
+    // 5. Asignar el Rol seleccionado en el <select>
+    const rolSelect = document.getElementById("tecRol") || document.getElementById("modalTecnicoRol");
+    if (rolSelect) {
+        rolSelect.value = (tec.rol && tec.rol.includes("Supervisor")) ? "Supervisor (Control Total)" : "Técnico (Solo Lectura)";
+    }
 
-    localStorage.setItem('tecnicos', JSON.stringify(tecnicos));
-    alert("¡Datos del técnico actualizados correctamente!");
+    // 6. Vista previa de la foto
+    const imgPrev = document.getElementById("imgPreview") || document.getElementById("modalTecnicoFotoPreview");
+    if (imgPrev) {
+        imgPrev.src = tec.foto || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150";
+    }
 
-    renderizarTecnicos();
-    if (typeof cargarSelectTecnicos === 'function') cargarSelectTecnicos();
+    // 7. Cambiar título y MOSTRAR MODAL
+    const tituloModal = document.getElementById("modalTecnicoTitulo") || document.getElementById("modalTecnicoTitle");
+    if (tituloModal) tituloModal.innerHTML = '<i class="fa-solid fa-user-pen"></i> Editar Técnico';
+
+    const modal = document.getElementById("modalTecnico");
+    if (modal) {
+        modal.style.setProperty("display", "flex", "important");
+    }
 };
 
 // ==========================================
@@ -816,7 +837,7 @@ function renderizarTecnicos(lista = null) {
 
         const botonesAccion = esTecnico ? "" : `
             <div style="position: absolute; top: 12px; right: 12px;" class="card-tecnico-actions">
-                <button onclick="editarTecnicoModal('${id}')" style="background:none; border:none; cursor:pointer;" title="Editar">✏️</button>
+                <button onclick="editarTecnico('${id}')" style="background:none; border:none; cursor:pointer;">
                 <button onclick="eliminarTecnico('${id}')" style="background:none; border:none; cursor:pointer;" title="Eliminar">🗑️</button>
             </div>
         `;
@@ -1082,35 +1103,42 @@ function cargarFotoLocal(event) {
 
 // Función para editar un técnico registrado
 window.editarTecnico = function(id) {
-    let tecnicos = JSON.parse(localStorage.getItem('tecnicos')) || [];
-    const index = tecnicos.findIndex(t => t.id === id);
-
-    if (index === -1) {
-        alert("Técnico no encontrado.");
+    if (window.rolUsuarioActual === "Técnico") {
+        if (window.Swal) Swal.fire('Acceso denegado', 'No tienes permisos para editar técnicos.', 'error');
         return;
     }
 
-    const tec = tecnicos[index];
-    const nuevoNombre = prompt("Nombre del Técnico:", tec.nombre);
-    if (nuevoNombre === null) return;
+    const datosGuardados = localStorage.getItem('tecnicos_data') || localStorage.getItem('lista_tecnicos');
+    let listaActual = (typeof listaTecnicos !== 'undefined' && Array.isArray(listaTecnicos)) ? listaTecnicos : [];
+    if (datosGuardados) {
+        try { listaActual = JSON.parse(datosGuardados); } catch(e) {}
+    }
 
-    const nuevaEspecialidad = prompt("Especialidad:", tec.especialidad || "");
-    if (nuevaEspecialidad === null) return;
+    const tec = listaActual.find(t => t.id == id || t.correo == id);
+    if (!tec) return;
 
-    const nuevoTelefono = prompt("Teléfono:", tec.telefono || "");
-    if (nuevoTelefono === null) return;
+    const setVal = (id1, id2, val) => {
+        const el = document.getElementById(id1) || document.getElementById(id2);
+        if (el) el.value = val || "";
+    };
 
-    // Actualizar datos
-    tecnicos[index].nombre = nuevoNombre;
-    tecnicos[index].especialidad = nuevaEspecialidad;
-    tecnicos[index].telefono = nuevoTelefono;
+    setVal("tecnicoId", "modalTecnicoId", tec.id || "");
+    setVal("tecCedula", "modalTecnicoCedula", tec.cedula || "");
+    setVal("tecNombre", "modalTecnicoNombre", tec.nombre || "");
+    setVal("tecCorreo", "modalTecnicoCorreo", tec.correo || "");
+    setVal("tecTelefono", "modalTecnicoTelefono", tec.telefono || "");
+    setVal("tecEspecialidad", "modalTecnicoEspecialidad", tec.especialidad || "");
+    setVal("tecFotoUrl", "modalTecnicoFotoUrl", tec.foto || "");
 
-    localStorage.setItem('tecnicos', JSON.stringify(tecnicos));
-    alert("¡Datos del técnico actualizados correctamente!");
+    const rolSelect = document.getElementById("tecRol") || document.getElementById("modalTecnicoRol");
+    if (rolSelect) {
+        rolSelect.value = (tec.rol && tec.rol.includes("Supervisor")) ? "Supervisor (Control Total)" : "Técnico (Solo Lectura)";
+    }
 
-    // Recargar vistas
-    if (typeof renderizarTecnicos === 'function') renderizarTecnicos();
-    if (typeof cargarSelectTecnicos === 'function') cargarSelectTecnicos();
+    const modal = document.getElementById("modalTecnico");
+    if (modal) {
+        modal.style.setProperty("display", "flex", "important");
+    }
 };
 
 // ==========================================
