@@ -841,48 +841,31 @@ let listaTecnicos = JSON.parse(localStorage.getItem('lista_tecnicos')) || [
 
 // CONTROL ABSOLUTO DE ROLES Y PERMISOS
 function aplicarPermisosPorRol() {
-    // 1. Obtener el rol actual de localStorage de forma limpia
-    const rolGuardado = localStorage.getItem('user_role') || window.rolUsuarioActual || "Supervisor";
-    
-    // Normalizar texto para comparación estricta
-    const esTecnico = rolGuardado.toLowerCase().trim() === "técnico" || 
-                      rolGuardado.toLowerCase().trim() === "tecnico" || 
-                      (rolGuardado.toLowerCase().includes("tec") && !rolGuardado.toLowerCase().includes("super"));
+    const esTecnico = window.rolUsuarioActual === "Técnico";
 
-    const rolFinalTexto = esTecnico ? "Técnico" : "Supervisor";
-
-    // 2. Forzar el cambio de texto en el botón del Header (Supervisor / Técnico)
-    const btnBadge = document.querySelector(".btn-supervisor") || 
-                     document.getElementById("userRoleDisplay") || 
-                     document.querySelector("header .btn-secondary") ||
-                     document.querySelector(".header button");
-                     
-    if (btnBadge && !btnBadge.textContent.includes("Salir")) {
-        btnBadge.textContent = rolFinalTexto;
+    // 1. Ocultar o mostrar el botón "+ Agregar Técnico"
+    const btnAgregarTecnico = document.querySelector("button[onclick*='modalTecnico']");
+    if (btnAgregarTecnico) {
+        btnAgregarTecnico.style.display = esTecnico ? "none" : "block";
     }
 
-    // 3. PERMISOS DE AGENDAMIENTO: Ocultar formulario de programar órdenes si es Técnico
-    const formOrden = document.getElementById("formOrden") || document.querySelector("form");
-    if (formOrden) {
-        const contenedorFormulario = formOrden.closest(".card") || formOrden.parentElement;
-        if (contenedorFormulario) {
-            contenedorFormulario.style.display = esTecnico ? "none" : "block";
-        }
-    }
-
-    // 4. PERMISOS DE DIRECTORIO: Ocultar botón + Agregar Técnico
-    const btnAgregar = document.getElementById("btnAbrirModalTecnico") || 
-                       document.getElementById("btnAgregarTecnico") || 
-                       document.querySelector("button[onclick*='Modal']");
-    if (btnAgregar) {
-        btnAgregar.style.display = esTecnico ? "none" : "inline-block";
-    }
-
-    // 5. PERMISOS DE TABLAS Y TARJETAS: Ocultar acciones de editar y eliminar
-    const accionesAcceso = document.querySelectorAll(".card-tecnico-actions, .card-actions, .btn-action-icon, .col-acciones, .btn-eliminar-orden");
+    // 2. Ocultar o mostrar los botones de Editar/Eliminar en las tarjetas de técnicos
+    const accionesAcceso = document.querySelectorAll(".card-tecnico-actions, .btn-edit-tec, .btn-delete-tec");
     accionesAcceso.forEach(el => {
-        el.style.display = esTecnico ? "none" : "";
+        el.style.display = esTecnico ? "none" : "inline-block";
     });
+
+    // 3. Ocultar botones de crear/editar órdenes de mantenimiento
+    const btnsAdminOrdenes = document.querySelectorAll(".btn-crear-orden, .btn-editar-orden, .btn-eliminar-orden");
+    btnsAdminOrdenes.forEach(el => {
+        el.style.display = esTecnico ? "none" : "inline-block";
+    });
+
+    // 4. Actualizar la etiqueta del perfil en la barra superior
+    const badgeRol = document.querySelector(".navbar .badge-role, .user-role-badge");
+    if (badgeRol) {
+        badgeRol.textContent = window.rolUsuarioActual || "Técnico";
+    }
 }
     
 function cerrarModalTecnico() {
@@ -890,45 +873,80 @@ function cerrarModalTecnico() {
 }
 
 function guardarTecnico(e) {
-    e.preventDefault();
-    if (rolUsuarioActual === "Técnico") return;
+    if (e && e.preventDefault) e.preventDefault();
 
-    const id = document.getElementById("tecnicoId").value;
-    const nombre = document.getElementById("tecNombre").value;
-    const especialidad = document.getElementById("tecEspecialidad").value;
-    const correo = document.getElementById("tecCorreo").value;
-    const telefono = document.getElementById("tecTelefono").value;
-    const empresa = document.getElementById("tecEmpresa").value;
-    let foto = document.getElementById("tecFotoUrl").value || document.getElementById("imgPreview").src;
+    // Bloqueo de seguridad si no es Supervisor
+    if (window.rolUsuarioActual === "Técnico") {
+        if (window.Swal) Swal.fire('Acceso denegado', 'No tienes permisos para guardar o editar técnicos.', 'error');
+        return;
+    }
+
+    const id = document.getElementById("tecnicoId") ? document.getElementById("tecnicoId").value : "";
+    const nombre = document.getElementById("tecNombre") ? document.getElementById("tecNombre").value.trim() : "";
+    const especialidad = document.getElementById("tecEspecialidad") ? document.getElementById("tecEspecialidad").value.trim() : "";
+    const correo = document.getElementById("tecCorreo") ? document.getElementById("tecCorreo").value.trim().toLowerCase() : "";
+    const telefono = document.getElementById("tecTelefono") ? document.getElementById("tecTelefono").value.trim() : "";
+    const cedula = document.getElementById("tecCedula") ? document.getElementById("tecCedula").value.trim() : "";
+    const rolSelect = document.getElementById("tecRol") || document.getElementById("loginRole");
+    const rolElegido = rolSelect ? rolSelect.value : "Técnico";
+    let foto = document.getElementById("tecFotoUrl") ? document.getElementById("tecFotoUrl").value.trim() : "";
+
+    if (!nombre || !correo) {
+        if (window.Swal) Swal.fire('Atención', 'Por favor ingresa nombre y correo electrónico.', 'warning');
+        return;
+    }
 
     if (!foto || foto.includes("placeholder.com")) {
         foto = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150";
     }
 
+    // Determinar si el rol asignado es Supervisor o Técnico
+    const rolFinal = (rolElegido.includes("Supervisor")) ? "Supervisor" : "Técnico";
+
+    if (typeof listaTecnicos === 'undefined') window.listaTecnicos = [];
+
     if (id) {
+        // Modo Edición
         const index = listaTecnicos.findIndex(t => t.id == id);
         if (index !== -1) {
-            listaTecnicos[index] = { id: listaTecnicos[index].id, nombre, especialidad, correo, telefono, empresa, foto };
+            listaTecnicos[index] = {
+                ...listaTecnicos[index],
+                nombre: nombre,
+                especialidad: especialidad,
+                correo: correo,
+                telefono: telefono,
+                cedula: cedula || listaTecnicos[index].cedula,
+                rol: rolFinal,
+                foto: foto
+            };
         }
     } else {
+        // Modo Nuevo Registro
         const nuevoTec = {
             id: Date.now(),
-            nombre,
-            especialidad,
-            correo,
-            telefono,
-            empresa,
-            foto
+            nombre: nombre,
+            especialidad: especialidad,
+            correo: correo,
+            telefono: telefono,
+            cedula: cedula,
+            rol: rolFinal,
+            foto: foto
         };
         listaTecnicos.push(nuevoTec);
     }
 
+    // Guardar en almacenamiento local
     localStorage.setItem('tecnicos_data', JSON.stringify(listaTecnicos));
-    renderizarTecnicos(listaTecnicos);
-    cargarSelectTecnicos();
-    cerrarModalTecnico();
+    localStorage.setItem('lista_tecnicos', JSON.stringify(listaTecnicos));
 
-    Swal.fire('Guardado', 'Técnico procesado exitosamente', 'success');
+    // Refrescar vistas y cerrar modal
+    if (typeof renderizarTecnicos === 'function') renderizarTecnicos(listaTecnicos);
+    if (typeof cargarSelectTecnicos === 'function') cargarSelectTecnicos();
+    if (typeof cerrarModalTecnico === 'function') cerrarModalTecnico();
+
+    if (window.Swal) {
+        Swal.fire('¡Guardado!', `Usuario registrado correctamente como ${rolFinal}`, 'success');
+    }
 }
 
 function editarTecnico(id) {
