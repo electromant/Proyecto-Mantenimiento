@@ -45,6 +45,21 @@
                 <label for="loginPass"><i class="fa-solid fa-key"></i> Contraseña (Cédula):</label>
                 <input type="password" id="loginPass" class="form-control" placeholder="••••••••" required>
             </div>
+<!-- Campo de Contraseña existente -->
+            <div class="form-group">
+                <label for="loginPass"><i class="fa-solid fa-key"></i> Contraseña</label>
+                <input type="password" id="loginPass" class="form-control" placeholder="••••••••" required>
+            </div>
+
+            <!-- AGREGAR ESTE BLOQUE DE ROL AQUÍ -->
+            <div class="form-group">
+                <label for="loginRole"><i class="fa-solid fa-user-shield"></i> Rol de Usuario</label>
+                <select id="loginRole" class="form-control" required>
+                    <option value="">-- Seleccione Rol --</option>
+                    <option value="Supervisor">Supervisor</option>
+                    <option value="Técnico">Técnico</option>
+                </select>
+            </div>
 
             <button type="submit" class="btn-primary btn-block">
                 <i class="fa-solid fa-right-to-bracket"></i> Ingresar

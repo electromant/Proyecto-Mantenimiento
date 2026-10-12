@@ -298,58 +298,57 @@ window.cambiarPestana = window.cambiarTab = function(tabName, element) {
     }
 };
 
-// INGRESO, SALIDA Y ROLES
 window.ejecutarIngresoDirecto = function(e) {
     if (e && e.preventDefault) e.preventDefault();
 
-    // 1. Detectar inputs del login
-    const emailInput = document.getElementById("loginEmail") || 
-                       document.querySelector("#loginOverlay input[type='email']") || 
-                       document.querySelector("input[type='email']");
-                       
-    const roleSelect = document.getElementById("loginRole") || 
-                       document.getElementById("rol") || 
-                       document.querySelector("#loginOverlay select") || 
-                       document.querySelector("select");
+    const emailInput = document.getElementById("loginEmail") || document.querySelector("input[type='email']");
+    const roleSelect = document.getElementById("loginRole") || document.querySelector("select");
 
-    // 2. Capturar valores reales seleccionados por el usuario
     const email = emailInput ? emailInput.value.trim() : "";
-    const role = roleSelect ? roleSelect.value : "";
+    let role = roleSelect ? roleSelect.value : "";
 
-    // 3. Validación
-    if (!email || !role || role.includes("--")) {
-        alert("Por favor ingresa un correo válido y selecciona un rol.");
+    // Si no hay select en el HTML o vino vacío, fallback por defecto a Supervisor
+    if (!role || role.includes("--")) {
+        role = "Supervisor";
+    }
+
+    if (!email) {
+        if (window.Swal) {
+            Swal.fire('Atención', 'Por favor ingresa un correo válido.', 'warning');
+        } else {
+            alert('Por favor ingresa un correo válido.');
+        }
         return false;
     }
 
-    // 4. Guardar en localStorage inmediatamente
-    window.rolUsuarioActual = role;
+    // Normalizar rol
+    const esTec = role.toLowerCase().includes("tec") || role.toLowerCase().includes("téc");
+    const rolFinal = esTec ? "Técnico" : "Supervisor";
+
+    // Guardar credenciales
+    window.rolUsuarioActual = rolFinal;
     window.correoUsuarioActual = email;
-    localStorage.setItem('user_role', role);
+    localStorage.setItem('user_role', rolFinal);
     localStorage.setItem('user_email', email);
 
-    // 5. Aplicar visibilidad de permisos inmediatamente según el ROL SELECCIONADO
+    // Aplicar restricciones
     if (typeof aplicarPermisosPorRol === 'function') {
         aplicarPermisosPorRol();
     }
 
-    // 6. Ocultar pantalla de login
+    // Ocultar pantalla de login
     const overlay = document.getElementById("loginOverlay");
     if (overlay) overlay.style.display = "none";
     document.body.classList.remove("not-logged-in");
 
-    // 7. Notificación
+    // Alerta de bienvenida
     if (window.Swal) {
         Swal.fire({
             title: '¡Bienvenido!',
-            text: `Sesión iniciada como ${role}`,
+            text: `Sesión iniciada como ${rolFinal}`,
             icon: 'success',
             timer: 1300,
             showConfirmButton: false
-        }).then(() => {
-            if (typeof aplicarPermisosPorRol === 'function') {
-                aplicarPermisosPorRol();
-            }
         });
     }
 
@@ -891,51 +890,7 @@ window.ejecutarIngresoDirecto = function(e) {
 
     return false;
 };
-    // A. Validar si es Supervisor
-    const esSupervisor = SUPERVISORES.some(sup => sup.email.toLowerCase() === email && sup.pass === pass);
-
-    if (esSupervisor) {
-        rolDetectado = "Supervisor";
-    } else {
-        // B. Validar si es un Técnico Registrado (Correo + Cédula como Pass)
-        const tecnicoEncontrado = listaTecnicos.find(t => 
-            t.correo && t.correo.toLowerCase() === email && (t.cedula === pass || t.id === pass)
-        );
-
-        if (tecnicoEncontrado) {
-            rolDetectado = "Técnico";
-        }
-    }
-
-    // C. Si no coincide con ningún registro
-    if (!rolDetectado) {
-        Swal.fire({
-            title: 'Acceso Denegado',
-            text: 'Correo o contraseña (cédula) incorrectos o no te encuentras registrado en el sistema.',
-            icon: 'error'
-        });
-        return false;
-    }
-
-    // D. Iniciar Sesión Exitosa
-    localStorage.setItem('user_role', rolDetectado);
-    localStorage.setItem('user_email', email);
-
-    const overlay = document.getElementById("loginOverlay");
-    if (overlay) overlay.style.display = "none";
-    document.body.classList.remove("not-logged-in");
-
-    Swal.fire({
-        title: '¡Bienvenido!',
-        text: `Sesión iniciada como ${rolDetectado}`,
-        icon: 'success',
-        timer: 1500,
-        showConfirmButton: false
-    });
-
-    return false;
-};
-
+    
 function cerrarModalTecnico() {
     document.getElementById("modalTecnico").style.display = "none";
 }
