@@ -79,52 +79,39 @@ function aplicarPermisosPorRol() {
     const rolActual = window.rolUsuarioActual || localStorage.getItem('user_role') || "Técnico";
     const esTecnico = (rolActual === "Técnico");
 
-    // 1. Cambiar el texto del badge/botón del header
-    const badges = document.querySelectorAll("#badgeRolUsuario, .navbar .badge, .badge, .btn-role");
-    badges.forEach(b => {
-        if (b.textContent.trim() === "Supervisor" || b.textContent.trim() === "Técnico") {
-            b.textContent = rolActual;
-            b.className = esTecnico ? "badge bg-primary me-2" : "badge bg-success me-2";
-        }
-    });
+    // 1. Cambiar la etiqueta del botón verde de arriba ("Supervisor" -> "Técnico")
+    const badgeRol = document.getElementById("badgeRolUsuario") || 
+                     document.querySelector("button.btn-success, .navbar button, .navbar span");
+                     
+    if (badgeRol) {
+        // Buscar el botón o contenedor que dice Supervisor/Técnico junto al botón Salir
+        const botonesNavbar = document.querySelectorAll(".navbar button, .navbar span, header button, header span");
+        botonesNavbar.forEach(el => {
+            if (el.textContent.includes("Supervisor") || el.textContent.includes("Técnico")) {
+                el.textContent = rolActual;
+            }
+        });
+    }
 
-    // 2. Inyección de hoja de estilos global (SE APLICA A TODAS LAS PESTAÑAS AUTOMÁTICAMENTE)
-    let styleBlock = document.getElementById("style-permisos-rol");
+    // 2. Inyectar regla CSS para ocultar ÚNICAMENTE el botón de Agregar Técnico
+    let styleBlock = document.getElementById("style-tecnico-fix");
     if (!styleBlock) {
         styleBlock = document.createElement("style");
-        styleBlock.id = "style-permisos-rol";
+        styleBlock.id = "style-tecnico-fix";
         document.head.appendChild(styleBlock);
     }
 
     if (esTecnico) {
-        // REGLAS INFALIBLES PARA TÉCNICO: Oculta botones de agregar, editar y formularios
         styleBlock.innerHTML = `
-            /* Ocultar botón 'Agregar Técnico' y edición en tarjetas */
+            /* Ocultar únicamente el botón + Agregar Técnico */
             button[onclick*='modalTecnico'],
             button[onclick*='Modal'],
-            .card-tecnico-actions,
-            .btn-edit-tec,
-            .btn-delete-tec,
-            .fa-pencil,
-            .fa-trash,
-            .fa-user-pen { display: none !important; }
-
-            /* Ocultar sección de Programar/Crear Orden de Mantenimiento */
-            #formOrden,
-            .form-programar-orden,
-            .card-programar-orden,
-            button[onclick*='guardarOrden'],
-            button[type='submit'],
-            .btn-guardar-orden { display: none !important; }
-
-            /* Ocultar columna de Acciones en la tabla de Historial de Órdenes */
-            .tabla-ordenes th:last-child,
-            .tabla-ordenes td:last-child,
-            .btn-editar-orden,
-            .btn-eliminar-orden { display: none !important; }
+            .btn-agregar-tecnico,
+            button:has(.fa-user-plus) { 
+                display: none !important; 
+            }
         `;
     } else {
-        // Si es Supervisor, se eliminan todas las restricciones
         styleBlock.innerHTML = "";
     }
 }
