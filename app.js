@@ -79,35 +79,29 @@ function aplicarPermisosPorRol() {
     const rolActual = window.rolUsuarioActual || localStorage.getItem('user_role') || "Técnico";
     const esTecnico = (rolActual === "Técnico");
 
-    // 1. Cambiar la etiqueta del botón verde de arriba ("Supervisor" -> "Técnico")
-    const badgeRol = document.getElementById("badgeRolUsuario") || 
-                     document.querySelector("button.btn-success, .navbar button, .navbar span");
-                     
-    if (badgeRol) {
-        // Buscar el botón o contenedor que dice Supervisor/Técnico junto al botón Salir
-        const botonesNavbar = document.querySelectorAll(".navbar button, .navbar span, header button, header span");
-        botonesNavbar.forEach(el => {
-            if (el.textContent.includes("Supervisor") || el.textContent.includes("Técnico")) {
-                el.textContent = rolActual;
-            }
-        });
+    // 1. Cambiar la etiqueta del texto superior ("userRoleDisplay")
+    const roleDisplay = document.getElementById("userRoleDisplay");
+    if (roleDisplay) {
+        roleDisplay.textContent = rolActual;
     }
 
-    // 2. Inyectar regla CSS para ocultar ÚNICAMENTE el botón de Agregar Técnico
-    let styleBlock = document.getElementById("style-tecnico-fix");
+    // 2. Ocultar o mostrar el botón "+ Agregar Técnico"
+    const btnAgregar = document.getElementById("btnAbrirModalTecnico");
+    if (btnAgregar) {
+        btnAgregar.style.setProperty("display", esTecnico ? "none" : "inline-block", "important");
+    }
+
+    // 3. Regla CSS de respaldo para asegurar que el botón se mantenga oculto
+    let styleBlock = document.getElementById("style-tecnico-exact");
     if (!styleBlock) {
         styleBlock = document.createElement("style");
-        styleBlock.id = "style-tecnico-fix";
+        styleBlock.id = "style-tecnico-exact";
         document.head.appendChild(styleBlock);
     }
 
     if (esTecnico) {
         styleBlock.innerHTML = `
-            /* Ocultar únicamente el botón + Agregar Técnico */
-            button[onclick*='modalTecnico'],
-            button[onclick*='Modal'],
-            .btn-agregar-tecnico,
-            button:has(.fa-user-plus) { 
+            #btnAbrirModalTecnico { 
                 display: none !important; 
             }
         `;
