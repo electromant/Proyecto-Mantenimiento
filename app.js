@@ -75,77 +75,59 @@ let listaOrdenes = JSON.parse(localStorage.getItem('ordenes_data')) || [
     }
 ];
 
-// ==========================================
-// 2. FUNCIÓN DE INGRESO AL INICIAR SESIÓN
-// ==========================================
-window.ejecutarIngresoDirecto = function(e) {
-    if (e && e.preventDefault) e.preventDefault();
+function aplicarPermisosPorRol() {
+    const rolActual = window.rolUsuarioActual || localStorage.getItem('user_role') || "Técnico";
+    const esTecnico = (rolActual === "Técnico");
 
-    try {
-        const emailInput = document.getElementById("loginEmail") || document.querySelector("input[type='email']");
-        const passInput = document.getElementById("loginPass") || document.querySelector("input[type='password']");
-
-        const email = emailInput ? emailInput.value.trim().toLowerCase() : "";
-        const pass = passInput ? passInput.value.trim() : "";
-
-        // SOLO VALIDAMOS QUE HAYA INGRESADO UN CORREO (Sin exigir rol)
-        if (!email) {
-            alert('Por favor ingresa tu correo electrónico.');
-            return false;
+    // 1. Cambiar el texto del badge/botón del header
+    const badges = document.querySelectorAll("#badgeRolUsuario, .navbar .badge, .badge, .btn-role");
+    badges.forEach(b => {
+        if (b.textContent.trim() === "Supervisor" || b.textContent.trim() === "Técnico") {
+            b.textContent = rolActual;
+            b.className = esTecnico ? "badge bg-primary me-2" : "badge bg-success me-2";
         }
+    });
 
-        let rolDetectado = "Técnico"; // Rol por defecto (seguro)
-
-        // 1. Validar Supervisor Principal y variantes
-        if (email.includes("harold") || email.includes("abaunza") || email.includes("santiagoque") || email.includes("admin") || email.includes("super")) {
-            rolDetectado = "Supervisor";
-        } 
-        // 2. Validar si está en la lista de SUPERVISORES
-        else if (typeof SUPERVISORES !== 'undefined' && Array.isArray(SUPERVISORES)) {
-            const esSup = SUPERVISORES.some(s => s && (s.email || s.correo || "").toLowerCase() === email);
-            if (esSup) rolDetectado = "Supervisor";
-        } 
-        // 3. Validar si está en la lista de TÉCNICOS
-        else if (typeof listaTecnicos !== 'undefined' && Array.isArray(listaTecnicos)) {
-            const tec = listaTecnicos.find(t => t && ((t.correo || t.email || "").toLowerCase() === email || (t.cedula && t.cedula.toString() === pass)));
-            if (tec) rolDetectado = tec.rol || "Técnico";
-        }
-
-        // Guardar sesión
-        window.rolUsuarioActual = rolDetectado;
-        window.correoUsuarioActual = email;
-        localStorage.setItem('user_role', rolDetectado);
-        localStorage.setItem('user_email', email);
-
-        // Ocultar modal de login
-        const overlay = document.getElementById("loginOverlay");
-        if (overlay) overlay.style.setProperty("display", "none", "important");
-        document.body.classList.remove("not-logged-in");
-
-        // Aplicar permisos
-        if (typeof aplicarPermisosPorRol === 'function') {
-            aplicarPermisosPorRol();
-        }
-
-        if (window.Swal) {
-            Swal.fire({
-                title: '¡Bienvenido!',
-                text: `Sesión iniciada como ${rolDetectado}`,
-                icon: 'success',
-                timer: 1200,
-                showConfirmButton: false
-            });
-        }
-
-    } catch (err) {
-        console.error("Error en login:", err);
-        const overlay = document.getElementById("loginOverlay");
-        if (overlay) overlay.style.display = "none";
-        document.body.classList.remove("not-logged-in");
+    // 2. Inyección de hoja de estilos global (SE APLICA A TODAS LAS PESTAÑAS AUTOMÁTICAMENTE)
+    let styleBlock = document.getElementById("style-permisos-rol");
+    if (!styleBlock) {
+        styleBlock = document.createElement("style");
+        styleBlock.id = "style-permisos-rol";
+        document.head.appendChild(styleBlock);
     }
 
-    return false;
-};
+    if (esTecnico) {
+        // REGLAS INFALIBLES PARA TÉCNICO: Oculta botones de agregar, editar y formularios
+        styleBlock.innerHTML = `
+            /* Ocultar botón 'Agregar Técnico' y edición en tarjetas */
+            button[onclick*='modalTecnico'],
+            button[onclick*='Modal'],
+            .card-tecnico-actions,
+            .btn-edit-tec,
+            .btn-delete-tec,
+            .fa-pencil,
+            .fa-trash,
+            .fa-user-pen { display: none !important; }
+
+            /* Ocultar sección de Programar/Crear Orden de Mantenimiento */
+            #formOrden,
+            .form-programar-orden,
+            .card-programar-orden,
+            button[onclick*='guardarOrden'],
+            button[type='submit'],
+            .btn-guardar-orden { display: none !important; }
+
+            /* Ocultar columna de Acciones en la tabla de Historial de Órdenes */
+            .tabla-ordenes th:last-child,
+            .tabla-ordenes td:last-child,
+            .btn-editar-orden,
+            .btn-eliminar-orden { display: none !important; }
+        `;
+    } else {
+        // Si es Supervisor, se eliminan todas las restricciones
+        styleBlock.innerHTML = "";
+    }
+}
 
 // Cargar permisos guardados al recargar la página
 document.addEventListener("DOMContentLoaded", function() {
@@ -156,7 +138,6 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 
-// 1. Función de ingreso al iniciar sesión
 window.ejecutarIngresoDirecto = function(e) {
     if (e && e.preventDefault) e.preventDefault();
 
@@ -167,63 +148,138 @@ window.ejecutarIngresoDirecto = function(e) {
         const email = emailInput ? emailInput.value.trim().toLowerCase() : "";
         const pass = passInput ? passInput.value.trim() : "";
 
-        if (!email) {
-            alert('Por favor ingresa tu correo electrónico.');
+        if (!email || !pass) {
+            alert('Por favor ingresa tu correo y tu cédula como contraseña.');
             return false;
         }
 
-        let rolDetectado = "Técnico";
+        let rolDetectado = null;
 
-        // 1. Validar Supervisor Principal y variaciones
-        if (email.includes("harold") || email.includes("abaunza") || email.includes("santiagoque") || email.includes("admin") || email.includes("super")) {
+        // 1. Validar Supervisor Maestro
+        if (email === "harold.abaunzaque@unipaz.edu.co") {
             rolDetectado = "Supervisor";
         } 
-        // 2. Validar lista global de SUPERVISORES
-        else if (typeof SUPERVISORES !== 'undefined' && Array.isArray(SUPERVISORES)) {
-            const esSup = SUPERVISORES.some(s => s && (s.email || s.correo || "").toLowerCase() === email);
-            if (esSup) rolDetectado = "Supervisor";
-        } 
-        // 3. Validar lista global de TÉCNICOS
-        else if (typeof listaTecnicos !== 'undefined' && Array.isArray(listaTecnicos)) {
-            const tec = listaTecnicos.find(t => t && ((t.correo || t.email || "").toLowerCase() === email || (t.cedula && t.cedula.toString() === pass)));
-            if (tec) rolDetectado = tec.rol || "Técnico";
+        else {
+            // Cargar datos reales de personal
+            const datosGuardados = localStorage.getItem('tecnicos_data') || localStorage.getItem('lista_tecnicos');
+            let listaActual = (typeof listaTecnicos !== 'undefined' && Array.isArray(listaTecnicos)) ? listaTecnicos : [];
+            if (datosGuardados) {
+                try { listaActual = JSON.parse(datosGuardados); } catch(err) {}
+            }
+
+            // 2. Buscar usuario y VALIDAR ESTRICTAMENTE LA CÉDULA COMO CONTRASEÑA
+            const usuarioEncontrado = listaActual.find(t => t && t.correo && t.correo.toLowerCase() === email);
+
+            if (usuarioEncontrado) {
+                const cedulaGuardada = (usuarioEncontrado.cedula || "").toString().trim();
+                
+                // Si la cédula no coincide exactamente con la contraseña digitada, bloquea el acceso
+                if (cedulaGuardada && cedulaGuardada !== pass) {
+                    if (window.Swal) {
+                        Swal.fire('Contraseña Incorrecta', 'La cédula digitada no coincide con el usuario.', 'error');
+                    } else {
+                        alert('Contraseña incorrecta.');
+                    }
+                    return false;
+                }
+                rolDetectado = usuarioEncontrado.rol || "Técnico";
+            }
         }
 
-        // Guardar sesión
+        // Si el usuario no está registrado en la lista
+        if (!rolDetectado) {
+            if (window.Swal) {
+                Swal.fire('Usuario No Encontrado', 'El correo ingresado no está registrado en el sistema.', 'warning');
+            } else {
+                alert('Usuario no registrado.');
+            }
+            return false;
+        }
+
+        // Guardar estado de sesión
         window.rolUsuarioActual = rolDetectado;
         window.correoUsuarioActual = email;
         localStorage.setItem('user_role', rolDetectado);
         localStorage.setItem('user_email', email);
 
-        // OCULTAR PANTALLA DE LOGIN
+        // Ocultar modal de login
         const overlay = document.getElementById("loginOverlay");
         if (overlay) overlay.style.setProperty("display", "none", "important");
         document.body.classList.remove("not-logged-in");
 
-        // Aplicar permisos
-        if (typeof aplicarPermisosPorRol === 'function') {
-            aplicarPermisosPorRol();
-        }
+        // Aplicar bloqueos de interfaz inmediatamente
+        aplicarPermisosPorRol();
 
         if (window.Swal) {
             Swal.fire({
                 title: '¡Bienvenido!',
                 text: `Sesión iniciada como ${rolDetectado}`,
                 icon: 'success',
-                timer: 1200,
+                timer: 1300,
                 showConfirmButton: false
             });
         }
 
     } catch (err) {
         console.error("Error en login:", err);
-        const overlay = document.getElementById("loginOverlay");
-        if (overlay) overlay.style.display = "none";
-        document.body.classList.remove("not-logged-in");
     }
 
     return false;
 };
+
+function aplicarPermisosPorRol() {
+    const rolActual = window.rolUsuarioActual || localStorage.getItem('user_role') || "Técnico";
+    const esTecnico = (rolActual === "Técnico");
+
+    // 1. Actualizar la etiqueta del header
+    const todosLosBadges = document.querySelectorAll("button, span, div, .badge");
+    todosLosBadges.forEach(el => {
+        if (el.textContent.trim() === "Supervisor" || el.textContent.trim() === "Técnico") {
+            if (el.classList.contains("badge") || el.tagName === "BUTTON" || el.id === "badgeRolUsuario") {
+                el.textContent = rolActual;
+                if (el.classList.contains("bg-success") || el.classList.contains("bg-primary")) {
+                    el.className = esTecnico ? "badge bg-primary me-2" : "badge bg-success me-2";
+                }
+            }
+        }
+    });
+
+    // 2. Bloqueo estricto por inyección de reglas CSS
+    let styleBlock = document.getElementById("role-permissions-style");
+    if (!styleBlock) {
+        styleBlock = document.createElement("style");
+        styleBlock.id = "role-permissions-style";
+        document.head.appendChild(styleBlock);
+    }
+
+    if (esTecnico) {
+        styleBlock.innerHTML = `
+            /* Ocultar botones de crear/editar/eliminar técnicos */
+            button[onclick*='modalTecnico'],
+            .card-tecnico-actions,
+            .btn-edit-tec,
+            .btn-delete-tec,
+            .fa-pencil,
+            .fa-trash,
+            .fa-user-pen { display: none !important; }
+
+            /* Ocultar formulario de Agendamiento para técnicos */
+            #formOrden,
+            .form-programar-orden,
+            button[onclick*='guardarOrden'],
+            button[type='submit'],
+            .btn-crear-orden { display: none !important; }
+
+            /* Ocultar columna de Acciones en la tabla de órdenes */
+            .tabla-ordenes th:last-child,
+            .tabla-ordenes td:last-child,
+            .btn-editar-orden,
+            .btn-eliminar-orden { display: none !important; }
+        `;
+    } else {
+        styleBlock.innerHTML = "";
+    }
+}
 
 // ==========================================
 // 1. INICIALIZACIÓN DEL MAPA LEAFLET
@@ -370,89 +426,6 @@ window.cambiarPestana = window.cambiarTab = function(tabName, element) {
     } else if (tabName === 'tecnicos' || tabName === 'directorio') {
         renderizarTecnicos();
     }
-};
-
-window.ejecutarIngresoDirecto = function(e) {
-    if (e && e.preventDefault) e.preventDefault();
-
-    try {
-        const emailInput = document.getElementById("loginEmail") || document.querySelector("input[type='email']");
-        const passInput = document.getElementById("loginPass") || document.querySelector("input[type='password']");
-
-        const email = emailInput ? emailInput.value.trim().toLowerCase() : "";
-        const pass = passInput ? passInput.value.trim() : "";
-
-        if (!email) {
-            alert('Por favor ingresa tu correo electrónico.');
-            return false;
-        }
-
-        let rolDetectado = "Técnico";
-
-        // 1. El ÚNICO Supervisor Principal Maestro es Harold Abaunzaque
-        if (email === "harold.abaunzaque@unipaz.edu.co") {
-            rolDetectado = "Supervisor";
-        } 
-        else {
-            // Cargar datos guardados en localStorage para buscar el usuario registrado
-            const datosGuardados = localStorage.getItem('tecnicos_data') || localStorage.getItem('lista_tecnicos');
-            let listaActual = (typeof listaTecnicos !== 'undefined' && Array.isArray(listaTecnicos)) ? listaTecnicos : [];
-            
-            if (datosGuardados) {
-                try {
-                    listaActual = JSON.parse(datosGuardados);
-                } catch(err) {}
-            }
-
-            // 2. Buscar si el usuario fue registrado en la lista de personal
-            const usuarioEncontrado = listaActual.find(t => 
-                t && ((t.correo && t.correo.toLowerCase() === email) || (t.cedula && t.cedula.toString() === pass))
-            );
-
-            if (usuarioEncontrado) {
-                rolDetectado = usuarioEncontrado.rol || "Técnico";
-            } else if (typeof SUPERVISORES !== 'undefined' && Array.isArray(SUPERVISORES)) {
-                // 3. Buscar en lista adicional de supervisores si no está en técnicos
-                const esSup = SUPERVISORES.some(s => s && (s.email || s.correo || "").toLowerCase() === email);
-                if (esSup) rolDetectado = "Supervisor";
-            }
-        }
-
-        // Guardar sesión activa
-        window.rolUsuarioActual = rolDetectado;
-        window.correoUsuarioActual = email;
-        localStorage.setItem('user_role', rolDetectado);
-        localStorage.setItem('user_email', email);
-
-        // OCULTAR LOGIN
-        const overlay = document.getElementById("loginOverlay");
-        if (overlay) overlay.style.setProperty("display", "none", "important");
-        document.body.classList.remove("not-logged-in");
-
-        // Aplicar los permisos correspondientes al rol en la interfaz
-        if (typeof aplicarPermisosPorRol === 'function') {
-            aplicarPermisosPorRol();
-        }
-
-        // Notificación de bienvenida
-        if (window.Swal) {
-            Swal.fire({
-                title: '¡Bienvenido!',
-                text: `Sesión iniciada como ${rolDetectado}`,
-                icon: 'success',
-                timer: 1300,
-                showConfirmButton: false
-            });
-        }
-
-    } catch (err) {
-        console.error("Error en login:", err);
-        const overlay = document.getElementById("loginOverlay");
-        if (overlay) overlay.style.display = "none";
-        document.body.classList.remove("not-logged-in");
-    }
-
-    return false;
 };
 
 function cerrarSesion() {
@@ -867,53 +840,6 @@ const SUPERVISORES = [
     { email: "harold.santiagoque@unipaz.edu.co", pass: "123456" },
     { email: "supervisor@unipaz.edu.co", pass: "123456" }
 ];
-
-// Lista por defecto de técnicos (si no hay guardados en localStorage)
-let listaTecnicos = JSON.parse(localStorage.getItem('lista_tecnicos')) || [
-    {
-        id: "1098765432", // La cédula actúa como ID y contraseña
-        cedula: "1098765432",
-        nombre: "Ing. Fabio Blanco",
-        especialidad: "Electromecánico",
-        correo: "maffiold94@gmail.com"
-    },
-    {
-        id: "1012345678",
-        cedula: "1012345678",
-        nombre: "Maria Elvira Vargas",
-        especialidad: "Especialista eléctrica",
-        correo: "maria.elvira@ecopetrol.com"
-    }
-];
-
-// CONTROL ABSOLUTO DE ROLES Y PERMISOS
-function aplicarPermisosPorRol() {
-    const esTecnico = window.rolUsuarioActual === "Técnico";
-
-    // 1. Ocultar o mostrar el botón "+ Agregar Técnico"
-    const btnAgregarTecnico = document.querySelector("button[onclick*='modalTecnico']");
-    if (btnAgregarTecnico) {
-        btnAgregarTecnico.style.display = esTecnico ? "none" : "block";
-    }
-
-    // 2. Ocultar o mostrar los botones de Editar/Eliminar en las tarjetas de técnicos
-    const accionesAcceso = document.querySelectorAll(".card-tecnico-actions, .btn-edit-tec, .btn-delete-tec");
-    accionesAcceso.forEach(el => {
-        el.style.display = esTecnico ? "none" : "inline-block";
-    });
-
-    // 3. Ocultar botones de crear/editar órdenes de mantenimiento
-    const btnsAdminOrdenes = document.querySelectorAll(".btn-crear-orden, .btn-editar-orden, .btn-eliminar-orden");
-    btnsAdminOrdenes.forEach(el => {
-        el.style.display = esTecnico ? "none" : "inline-block";
-    });
-
-    // 4. Actualizar la etiqueta del perfil en la barra superior
-    const badgeRol = document.querySelector(".navbar .badge-role, .user-role-badge");
-    if (badgeRol) {
-        badgeRol.textContent = window.rolUsuarioActual || "Técnico";
-    }
-}
     
 function cerrarModalTecnico() {
     document.getElementById("modalTecnico").style.display = "none";
