@@ -808,7 +808,6 @@ window.guardarTecnico = function(e) {
     if (e && e.preventDefault) e.preventDefault();
 
     try {
-        // Función auxiliar robusta para obtener valor por ID
         const getVal = (id1, id2) => {
             const el = document.getElementById(id1) || document.getElementById(id2);
             return el ? el.value.trim() : "";
@@ -820,22 +819,15 @@ window.guardarTecnico = function(e) {
         const nombre = getVal("tecNombre", "modalTecnicoNombre");
         const especialidad = getVal("tecEspecialidad", "modalTecnicoEspecialidad");
         const telefono = getVal("tecTelefono", "modalTecnicoTelefono");
-        let foto = getVal("tecFotoUrl", "modalTecnicoFotoUrl");
+        let fotoInput = getVal("tecFotoUrl", "modalTecnicoFotoUrl");
 
-        // 1. Validar campos mínimos
         if (!nombre || !correo) {
-            if (window.Swal) {
-                Swal.fire('Atención', 'Por favor ingresa al menos el Nombre y el Correo electrónico.', 'warning');
-            } else {
-                alert('Por favor ingresa al menos el Nombre y el Correo electrónico.');
-            }
+            alert('Por favor ingresa al menos Nombre y Correo.');
             return false;
         }
 
-        // Obtener la entrada del archivo de imagen
-        const inputFoto = document.getElementById("tecFoto") || document.getElementById("modalTecnicoFoto") || document.querySelector("#modalTecnico input[type='file']");
-
-        const procesarRegistro = (fotoBase64) => {
+        // Función para compilar el guardado en localStorage
+        const procesarYGuardarFinal = (fotoOptimizada) => {
             let lista = [];
             try {
                 lista = JSON.parse(localStorage.getItem('lista_tecnicos') || localStorage.getItem('tecnicos_data') || "[]");
@@ -843,47 +835,43 @@ window.guardarTecnico = function(e) {
                 lista = [];
             }
 
-            const fotoFinal = fotoBase64 || foto || "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+            const fotoFinal = fotoOptimizada || (fotoInput.startsWith("data:image") ? fotoInput : null) || "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+
+            const datosTecnico = {
+                id: id ? id : Date.now(),
+                nombre,
+                correo,
+                cedula,
+                especialidad,
+                telefono,
+                foto: fotoFinal,
+                rol: "Técnico"
+            };
 
             if (id) {
-                // EDITAR TÉCNICO
                 const idx = lista.findIndex(t => t && (t.id == id || t.cedula == cedula || t.correo == correo));
                 if (idx !== -1) {
-                    lista[idx] = {
-                        ...lista[idx],
-                        nombre,
-                        correo,
-                        cedula,
-                        especialidad,
-                        telefono,
-                        foto: fotoFinal,
-                        rol: "Técnico"
-                    };
+                    lista[idx] = { ...lista[idx], ...datosTecnico };
                 } else {
-                    lista.push({ id: Date.now(), nombre, correo, cedula, especialidad, telefono, foto: fotoFinal, rol: "Técnico" });
+                    lista.push(datosTecnico);
                 }
             } else {
-                // CREAR TÉCNICO
-                lista.push({
-                    id: Date.now(),
-                    nombre,
-                    correo,
-                    cedula,
-                    especialidad,
-                    telefono,
-                    foto: fotoFinal,
-                    rol: "Técnico"
-                });
+                lista.push(datosTecnico);
             }
 
-            // Guardar en Storage
-            localStorage.setItem('lista_tecnicos', JSON.stringify(lista));
-            localStorage.setItem('tecnicos_data', JSON.stringify(lista));
+            // Intentar guardar de forma segura
+            try {
+                localStorage.setItem('lista_tecnicos', JSON.stringify(lista));
+                localStorage.setItem('tecnicos_data', JSON.stringify(lista));
+            } catch (quotaError) {
+                console.warn("LocalStorage lleno, guardando sin imagen pesada...");
+                datosTecnico.foto = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+                localStorage.setItem('lista_tecnicos', JSON.stringify(lista));
+                localStorage.setItem('tecnicos_data', JSON.stringify(lista));
+            }
 
-            // Actualizar vista global
             if (typeof renderizarTecnicos === 'function') renderizarTecnicos();
 
-            // Cerrar modal
             const modal = document.getElementById("modalTecnico");
             if (modal) modal.style.display = "none";
 
@@ -894,20 +882,32 @@ window.guardarTecnico = function(e) {
             }
         };
 
-        // Si subió un archivo de foto local
+        // Redimensionar imagen para reducir peso antes de guardar
+        const inputFoto = document.getElementById("tecFoto") || document.getElementById("modalTecnicoFoto") || document.querySelector("#modalTecnico input[type='file']");
+
         if (inputFoto && inputFoto.files && inputFoto.files[0]) {
             const reader = new FileReader();
             reader.onload = function(evt) {
-                procesarRegistro(evt.target.result);
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement("canvas");
+                    const ctx = canvas.getContext("2d");
+                    canvas.width = 150;
+                    canvas.height = 150;
+                    ctx.drawImage(img, 0, 0, 150, 150);
+                    const fotoComprimida = canvas.toDataURL("image/jpeg", 0.7);
+                    procesarYGuardarFinal(fotoComprimida);
+                };
+                img.src = evt.target.result;
             };
             reader.readAsDataURL(inputFoto.files[0]);
         } else {
-            procesarRegistro(null);
+            procesarYGuardarFinal(null);
         }
 
     } catch (error) {
         console.error("Error al guardar técnico:", error);
-        alert("Ocurrió un error al intentar guardar. Revisa la consola.");
+        alert("Error al guardar: " + error.message);
     }
 
     return false;
