@@ -819,15 +819,13 @@ window.guardarTecnico = function(e) {
         const nombre = getVal("tecNombre", "modalTecnicoNombre");
         const especialidad = getVal("tecEspecialidad", "modalTecnicoEspecialidad");
         const telefono = getVal("tecTelefono", "modalTecnicoTelefono");
-        let fotoInput = getVal("tecFotoUrl", "modalTecnicoFotoUrl");
 
         if (!nombre || !correo) {
             alert('Por favor ingresa al menos Nombre y Correo.');
             return false;
         }
 
-        // Función para compilar el guardado en localStorage
-        const procesarYGuardarFinal = (fotoOptimizada) => {
+        const procesarYGuardarFinal = (fotoMini) => {
             let lista = [];
             try {
                 lista = JSON.parse(localStorage.getItem('lista_tecnicos') || localStorage.getItem('tecnicos_data') || "[]");
@@ -835,7 +833,7 @@ window.guardarTecnico = function(e) {
                 lista = [];
             }
 
-            const fotoFinal = fotoOptimizada || (fotoInput.startsWith("data:image") ? fotoInput : null) || "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+            const fotoFinal = fotoMini || "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
 
             const datosTecnico = {
                 id: id ? id : Date.now(),
@@ -859,15 +857,15 @@ window.guardarTecnico = function(e) {
                 lista.push(datosTecnico);
             }
 
-            // Intentar guardar de forma segura
+            // Guardado ultra seguro
             try {
                 localStorage.setItem('lista_tecnicos', JSON.stringify(lista));
                 localStorage.setItem('tecnicos_data', JSON.stringify(lista));
-            } catch (quotaError) {
-                console.warn("LocalStorage lleno, guardando sin imagen pesada...");
+            } catch (errQuota) {
+                console.warn("Storage lleno. Guardando con icono liviano predeterminado.");
                 datosTecnico.foto = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
-                localStorage.setItem('lista_tecnicos', JSON.stringify(lista));
-                localStorage.setItem('tecnicos_data', JSON.stringify(lista));
+                localStorage.setItem('lista_tecnicos', JSON.stringify([datosTecnico]));
+                localStorage.setItem('tecnicos_data', JSON.stringify([datosTecnico]));
             }
 
             if (typeof renderizarTecnicos === 'function') renderizarTecnicos();
@@ -882,7 +880,7 @@ window.guardarTecnico = function(e) {
             }
         };
 
-        // Redimensionar imagen para reducir peso antes de guardar
+        // Redimensionar imagen a una miniatura ultraligera (80x80 px)
         const inputFoto = document.getElementById("tecFoto") || document.getElementById("modalTecnicoFoto") || document.querySelector("#modalTecnico input[type='file']");
 
         if (inputFoto && inputFoto.files && inputFoto.files[0]) {
@@ -892,11 +890,14 @@ window.guardarTecnico = function(e) {
                 img.onload = function() {
                     const canvas = document.createElement("canvas");
                     const ctx = canvas.getContext("2d");
-                    canvas.width = 150;
-                    canvas.height = 150;
-                    ctx.drawImage(img, 0, 0, 150, 150);
-                    const fotoComprimida = canvas.toDataURL("image/jpeg", 0.7);
-                    procesarYGuardarFinal(fotoComprimida);
+                    canvas.width = 80;
+                    canvas.height = 80;
+                    ctx.drawImage(img, 0, 0, 80, 80);
+                    const fotoMini = canvas.toDataURL("image/jpeg", 0.5);
+                    procesarYGuardarFinal(fotoMini);
+                };
+                img.onerror = function() {
+                    procesarYGuardarFinal(null);
                 };
                 img.src = evt.target.result;
             };
@@ -907,12 +908,10 @@ window.guardarTecnico = function(e) {
 
     } catch (error) {
         console.error("Error al guardar técnico:", error);
-        alert("Error al guardar: " + error.message);
     }
 
     return false;
 };
-
 function editarTecnico(id) {
     if (rolUsuarioActual === "Técnico") return;
 
