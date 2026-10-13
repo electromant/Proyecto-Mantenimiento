@@ -79,19 +79,23 @@ function aplicarPermisosPorRol() {
     const rolActual = window.rolUsuarioActual || localStorage.getItem('user_role') || "Técnico";
     const esTecnico = (rolActual === "Técnico");
 
-    // 1. Cambiar la etiqueta del texto superior ("userRoleDisplay")
-    const roleDisplay = document.getElementById("userRoleDisplay");
-    if (roleDisplay) {
-        roleDisplay.textContent = rolActual;
-    }
+    // 1. Actualizar el texto del botón/insignia verde en el header
+    const elementosRol = document.querySelectorAll("#userRoleDisplay, #badgeRolUsuario, .navbar .btn-success, header .btn-success, .navbar button, header button");
+    
+    elementosRol.forEach(el => {
+        const texto = el.textContent.trim();
+        if (texto === "Supervisor" || texto === "Técnico" || el.id === "userRoleDisplay" || el.id === "badgeRolUsuario") {
+            el.textContent = rolActual;
+        }
+    });
 
-    // 2. Ocultar o mostrar el botón "+ Agregar Técnico"
-    const btnAgregar = document.getElementById("btnAbrirModalTecnico");
+    // 2. Ocultar o mostrar el botón "+ Agregar Técnico" por ID y clase
+    const btnAgregar = document.getElementById("btnAbrirModalTecnico") || document.querySelector("button[onclick*='modalTecnico']");
     if (btnAgregar) {
         btnAgregar.style.setProperty("display", esTecnico ? "none" : "inline-block", "important");
     }
 
-    // 3. Regla CSS de respaldo para asegurar que el botón se mantenga oculto
+    // 3. Regla CSS global para forzar la ocultación en caso de renderizado tardío
     let styleBlock = document.getElementById("style-tecnico-exact");
     if (!styleBlock) {
         styleBlock = document.createElement("style");
@@ -101,7 +105,9 @@ function aplicarPermisosPorRol() {
 
     if (esTecnico) {
         styleBlock.innerHTML = `
-            #btnAbrirModalTecnico { 
+            #btnAbrirModalTecnico,
+            button[onclick*='modalTecnico'],
+            button[onclick*='Modal'] { 
                 display: none !important; 
             }
         `;
