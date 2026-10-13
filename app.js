@@ -719,74 +719,57 @@ function abrirCorreoRespaldo(orden) {
 // DIRECTORIO DE TÉCNICOS
    
 // ÚNICA Y EXCLUSIVA FUNCIÓN PARA RENDERIZAR TÉCNICOS
-function renderizarTecnicos(lista = null) {
-    const contenedor = document.getElementById("contenedorTecnicos") || 
-                       document.getElementById("contenedor-tecnicos") || 
-                       document.getElementById("directorioTecnicos") || 
-                       document.getElementById("sec-tecnicos");
-                       
+function renderizarTecnicos() {
+    const contenedor = document.getElementById("contenedorTecnicos");
     if (!contenedor) return;
 
-    // 1. Cargar lista desde parámetro o de localStorage (Sincronizando todas las claves posibles)
-    let tecnicos = lista;
-    if (!tecnicos || !Array.isArray(tecnicos) || tecnicos.length === 0) {
-        tecnicos = JSON.parse(localStorage.getItem('lista_tecnicos')) || 
-                   JSON.parse(localStorage.getItem('tecnicos')) || 
-                   JSON.parse(localStorage.getItem('tecnicos_data')) || 
-                   window.listaTecnicos || [];
+    let lista = [];
+    try {
+        lista = JSON.parse(localStorage.getItem('lista_tecnicos') || localStorage.getItem('tecnicos_data') || "[]");
+    } catch (e) {
+        lista = [];
     }
 
-    // Unificar claves en localStorage para que todo el código lea lo mismo
-    window.listaTecnicos = tecnicos;
-    localStorage.setItem('lista_tecnicos', JSON.stringify(tecnicos));
-    localStorage.setItem('tecnicos', JSON.stringify(tecnicos));
-    localStorage.setItem('tecnicos_data', JSON.stringify(tecnicos));
-
-    // 2. Ubicar la cuadrícula donde se inyectan las tarjetas
-    const grid = contenedor.querySelector('.tecnicos-grid') || contenedor.querySelector('.directorio-grid') || contenedor;
-
-    if (tecnicos.length === 0) {
-        grid.innerHTML = `<p style="text-align: center; color: #666; grid-column: 1/-1; padding: 20px;">No hay técnicos registrados.</p>`;
+    if (lista.length === 0) {
+        contenedor.innerHTML = `<p style="text-align:center; color:#666; grid-column: 1/-1;">No hay técnicos registrados.</p>`;
         return;
     }
 
-    // 3. Renderizar las tarjetas
-    const rolActual = window.rolUsuarioActual || localStorage.getItem('user_role') || "Supervisor";
-    const esTecnico = rolActual.toLowerCase().includes("tec") || rolActual.toLowerCase().includes("téc");
+    const rolActual = window.rolUsuarioActual || localStorage.getItem('user_role') || "Técnico";
+    const esSupervisor = (rolActual === "Supervisor");
 
-    let html = "";
-    tecnicos.forEach(tec => {
-        const id = tec.id || tec.cedula;
-        const foto = tec.foto || tec.imagen || "https://via.placeholder.com/150";
-        const nombre = tec.nombre || "Sin Nombre";
-        const especialidad = tec.especialidad || tec.cargo || "Técnico";
-        const telefono = tec.telefono || tec.celular || "Sin Teléfono";
-        const correo = tec.correo || tec.email || "";
-
-        const botonesAccion = esTecnico ? "" : `
+    contenedor.innerHTML = lista.map((tec, index) => {
+        const idTec = tec.id || index;
+        const fotoUrl = tec.foto || tec.fotoUrl || "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+        
+        // Acciones de la tarjeta (visibles solo para Supervisor)
+        const accionesHTML = esSupervisor ? `
             <div class="card-tecnico-actions" style="position: absolute; top: 10px; right: 10px; display: flex; gap: 8px;">
-        <button class="btn-edit-tec" onclick="editarTecnico('${t.id}')" title="Editar Técnico" style="background: transparent; border: none; color: #0d6efd; cursor: pointer;">
-            <i class="fa-solid fa-pencil"></i>
-        </button>
-        <button class="btn-delete-tec" onclick="eliminarTecnico('${t.id}')" title="Eliminar Técnico" style="background: transparent; border: none; color: #dc3545; cursor: pointer;">
-            <i class="fa-solid fa-trash"></i>
-        </button>
-    </div>
-`;
+                <button class="btn-edit-tec" onclick="editarTecnico('${idTec}')" title="Editar" style="background: transparent; border: none; color: #0d6efd; cursor: pointer; font-size: 1.1rem;">
+                    <i class="fa-solid fa-pencil"></i>
+                </button>
+                <button class="btn-delete-tec" onclick="eliminarTecnico('${idTec}')" title="Eliminar" style="background: transparent; border: none; color: #dc3545; cursor: pointer; font-size: 1.1rem;">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </div>
+        ` : '';
 
-        html += `
-        <div class="card-tecnico" style="background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); text-align: center; position: relative;">
-            ${botonesAccion}
-            <img src="${foto}" alt="${nombre}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #005a36; margin-bottom: 10px;">
-            <h4 style="margin: 5px 0; color: #2c3e50; font-size: 15px;">${nombre}</h4>
-            <p style="margin: 2px 0; font-size: 13px; color: #7f8c8d;">${especialidad}</p>
-            <p style="margin: 2px 0; font-size: 12px; color: #95a5a6;">📞 ${telefono}</p>
-            <p style="margin: 2px 0; font-size: 12px; color: #95a5a6;">✉️ ${correo}</p>
-        </div>
+        return `
+            <div class="card-box" style="position: relative; text-align: center; padding: 20px;">
+                ${accionesHTML}
+                <img src="${fotoUrl}" alt="${tec.nombre}" style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid #198754; margin-bottom: 12px;">
+                <h3 style="margin: 0; font-size: 1.1rem; color: #212529;">${tec.nombre || 'Técnico'}</h3>
+                <p style="margin: 4px 0; color: #6c757d; font-size: 0.9rem;">${tec.especialidad || 'Electromecánico'}</p>
+                <p style="margin: 4px 0; color: #6c757d; font-size: 0.85rem;"><i class="fa-solid fa-phone"></i> ${tec.telefono || 'Sin teléfono'}</p>
+                <p style="margin: 4px 0; color: #0d6efd; font-size: 0.85rem;"><i class="fa-solid fa-envelope"></i> ${tec.correo || ''}</p>
+            </div>
         `;
-    });
+    }).join("");
 
-    grid.innerHTML = html;
+    // Aplicar permisos generales por rol
+    if (typeof aplicarPermisosPorRol === 'function') {
+        aplicarPermisosPorRol();
+    }
 }
 
 // Asignar al objeto global para llamarla desde cualquier evento
@@ -847,7 +830,7 @@ window.guardarTecnico = function(e) {
             };
 
             if (id) {
-                const idx = lista.findIndex(t => t && (t.id == id || t.cedula == cedula || t.correo == correo));
+                const idx = lista.findIndex(tec => tec && (tec.id == id || tec.cedula == cedula || tec.correo == correo));
                 if (idx !== -1) {
                     lista[idx] = { ...lista[idx], ...datosTecnico };
                 } else {
@@ -857,18 +840,17 @@ window.guardarTecnico = function(e) {
                 lista.push(datosTecnico);
             }
 
-            // Guardado ultra seguro
             try {
                 localStorage.setItem('lista_tecnicos', JSON.stringify(lista));
                 localStorage.setItem('tecnicos_data', JSON.stringify(lista));
             } catch (errQuota) {
-                console.warn("Storage lleno. Guardando con icono liviano predeterminado.");
+                console.warn("Storage lleno. Guardando con icono predeterminado.");
                 datosTecnico.foto = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
                 localStorage.setItem('lista_tecnicos', JSON.stringify([datosTecnico]));
                 localStorage.setItem('tecnicos_data', JSON.stringify([datosTecnico]));
             }
 
-            if (typeof renderizarTecnicos === 'function') renderizarTecnicos();
+            renderizarTecnicos();
 
             const modal = document.getElementById("modalTecnico");
             if (modal) modal.style.display = "none";
@@ -880,7 +862,6 @@ window.guardarTecnico = function(e) {
             }
         };
 
-        // Redimensionar imagen a una miniatura ultraligera (80x80 px)
         const inputFoto = document.getElementById("tecFoto") || document.getElementById("modalTecnicoFoto") || document.querySelector("#modalTecnico input[type='file']");
 
         if (inputFoto && inputFoto.files && inputFoto.files[0]) {
@@ -890,10 +871,10 @@ window.guardarTecnico = function(e) {
                 img.onload = function() {
                     const canvas = document.createElement("canvas");
                     const ctx = canvas.getContext("2d");
-                    canvas.width = 80;
-                    canvas.height = 80;
-                    ctx.drawImage(img, 0, 0, 80, 80);
-                    const fotoMini = canvas.toDataURL("image/jpeg", 0.5);
+                    canvas.width = 120;
+                    canvas.height = 120;
+                    ctx.drawImage(img, 0, 0, 120, 120);
+                    const fotoMini = canvas.toDataURL("image/jpeg", 0.6);
                     procesarYGuardarFinal(fotoMini);
                 };
                 img.onerror = function() {
@@ -912,6 +893,7 @@ window.guardarTecnico = function(e) {
 
     return false;
 };
+
 function editarTecnico(id) {
     if (rolUsuarioActual === "Técnico") return;
 
