@@ -807,68 +807,107 @@ function cerrarModalTecnico() {
 window.guardarTecnico = function(e) {
     if (e && e.preventDefault) e.preventDefault();
 
-    const nombre = document.getElementById("tecNombre") ? document.getElementById("tecNombre").value : "";
-    const especialidad = document.getElementById("tecEspecialidad") ? document.getElementById("tecEspecialidad").value : "";
-    const telefono = document.getElementById("tecTelefono") ? document.getElementById("tecTelefono").value : "";
-    const correo = document.getElementById("tecCorreo") ? document.getElementById("tecCorreo").value : "";
-    const cedula = document.getElementById("tecCedula") ? document.getElementById("tecCedula").value : "";
-    
-    const inputFoto = document.getElementById("tecFoto") || document.querySelector("input[type='file']");
+    try {
+        // Función auxiliar robusta para obtener valor por ID
+        const getVal = (id1, id2) => {
+            const el = document.getElementById(id1) || document.getElementById(id2);
+            return el ? el.value.trim() : "";
+        };
 
-    const procesarYGuardar = (fotoBase64) => {
-        // Cargar lista existente
-        let lista = JSON.parse(localStorage.getItem('lista_tecnicos') || localStorage.getItem('tecnicos_data') || "[]");
-        
-        const idTecnico = window.tecnicoEdicionId;
+        const id = getVal("tecnicoId", "modalTecnicoId");
+        const cedula = getVal("tecCedula", "modalTecnicoCedula");
+        const correo = getVal("tecCorreo", "modalTecnicoCorreo").toLowerCase();
+        const nombre = getVal("tecNombre", "modalTecnicoNombre");
+        const especialidad = getVal("tecEspecialidad", "modalTecnicoEspecialidad");
+        const telefono = getVal("tecTelefono", "modalTecnicoTelefono");
+        let foto = getVal("tecFotoUrl", "modalTecnicoFotoUrl");
 
-        if (idTecnico !== null && idTecnico !== undefined && idTecnico !== "") {
-            // EDITAR TÉCNICO EXISTENTE
-            const idx = lista.findIndex((t, i) => (t.id && t.id == idTecnico) || i == idTecnico);
-            if (idx !== -1) {
-                lista[idx] = {
-                    ...lista[idx],
-                    nombre,
-                    especialidad,
-                    telefono,
-                    correo,
-                    cedula,
-                    foto: fotoBase64 || lista[idx].foto || "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
-                };
+        // 1. Validar campos mínimos
+        if (!nombre || !correo) {
+            if (window.Swal) {
+                Swal.fire('Atención', 'Por favor ingresa al menos el Nombre y el Correo electrónico.', 'warning');
+            } else {
+                alert('Por favor ingresa al menos el Nombre y el Correo electrónico.');
             }
-            window.tecnicoEdicionId = null;
-        } else {
-            // CREAR NUEVO TÉCNICO
-            const nuevoTecnico = {
-                id: Date.now(),
-                nombre,
-                especialidad,
-                telefono,
-                correo,
-                cedula,
-                rol: "Técnico",
-                foto: fotoBase64 || "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
-            };
-            lista.push(nuevoTecnico);
+            return false;
         }
 
-        // Guardar en LocalStorage y renderizar
-        localStorage.setItem('lista_tecnicos', JSON.stringify(lista));
-        localStorage.setItem('tecnicos_data', JSON.stringify(lista));
-        if (typeof renderizarTecnicos === 'function') renderizarTecnicos();
-        if (typeof cerrarModalTecnico === 'function') cerrarModalTecnico();
+        // Obtener la entrada del archivo de imagen
+        const inputFoto = document.getElementById("tecFoto") || document.getElementById("modalTecnicoFoto") || document.querySelector("#modalTecnico input[type='file']");
 
-        if (window.Swal) Swal.fire('Éxito', 'Técnico guardado correctamente.', 'success');
-    };
+        const procesarRegistro = (fotoBase64) => {
+            let lista = [];
+            try {
+                lista = JSON.parse(localStorage.getItem('lista_tecnicos') || localStorage.getItem('tecnicos_data') || "[]");
+            } catch (err) {
+                lista = [];
+            }
 
-    // Convertir imagen a Base64 si se cargó un archivo
-    if (inputFoto && inputFoto.files && inputFoto.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            procesarYGuardar(event.target.result);
+            const fotoFinal = fotoBase64 || foto || "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+
+            if (id) {
+                // EDITAR TÉCNICO
+                const idx = lista.findIndex(t => t && (t.id == id || t.cedula == cedula || t.correo == correo));
+                if (idx !== -1) {
+                    lista[idx] = {
+                        ...lista[idx],
+                        nombre,
+                        correo,
+                        cedula,
+                        especialidad,
+                        telefono,
+                        foto: fotoFinal,
+                        rol: "Técnico"
+                    };
+                } else {
+                    lista.push({ id: Date.now(), nombre, correo, cedula, especialidad, telefono, foto: fotoFinal, rol: "Técnico" });
+                }
+            } else {
+                // CREAR TÉCNICO
+                lista.push({
+                    id: Date.now(),
+                    nombre,
+                    correo,
+                    cedula,
+                    especialidad,
+                    telefono,
+                    foto: fotoFinal,
+                    rol: "Técnico"
+                });
+            }
+
+            // Guardar en Storage
+            localStorage.setItem('lista_tecnicos', JSON.stringify(lista));
+            localStorage.setItem('tecnicos_data', JSON.stringify(lista));
+
+            // Actualizar vista global
+            if (typeof renderizarTecnicos === 'function') renderizarTecnicos();
+
+            // Cerrar modal
+            const modal = document.getElementById("modalTecnico");
+            if (modal) modal.style.display = "none";
+
+            if (window.Swal) {
+                Swal.fire('¡Éxito!', 'Técnico guardado correctamente.', 'success');
+            } else {
+                alert('Técnico guardado correctamente.');
+            }
         };
-        reader.readAsDataURL(inputFoto.files[0]);
-    } else {
-        procesarYGuardar(null);
+
+        // Si subió un archivo de foto local
+        if (inputFoto && inputFoto.files && inputFoto.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                procesarRegistro(evt.target.result);
+            };
+            reader.readAsDataURL(inputFoto.files[0]);
+        } else {
+            procesarRegistro(null);
+        }
+
+    } catch (error) {
+        console.error("Error al guardar técnico:", error);
+        alert("Ocurrió un error al intentar guardar. Revisa la consola.");
     }
 
     return false;
