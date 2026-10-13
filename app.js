@@ -79,23 +79,27 @@ function aplicarPermisosPorRol() {
     const rolActual = window.rolUsuarioActual || localStorage.getItem('user_role') || "Técnico";
     const esTecnico = (rolActual === "Técnico");
 
-    // 1. Actualizar el texto del botón/insignia verde en el header
-    const elementosRol = document.querySelectorAll("#userRoleDisplay, #badgeRolUsuario, .navbar .btn-success, header .btn-success, .navbar button, header button");
-    
+    // 1. Cambiar el texto del rol en el header (userRoleDisplay)
+    const roleDisplay = document.getElementById("userRoleDisplay");
+    if (roleDisplay) {
+        roleDisplay.textContent = rolActual;
+    }
+
+    // Actualización de respaldo para cualquier botón del header que conserve "Supervisor"
+    const elementosRol = document.querySelectorAll(".navbar button, header button, .navbar span, header span");
     elementosRol.forEach(el => {
-        const texto = el.textContent.trim();
-        if (texto === "Supervisor" || texto === "Técnico" || el.id === "userRoleDisplay" || el.id === "badgeRolUsuario") {
+        if (el.textContent.trim() === "Supervisor" || el.textContent.trim() === "Técnico") {
             el.textContent = rolActual;
         }
     });
 
-    // 2. Ocultar o mostrar el botón "+ Agregar Técnico" por ID y clase
-    const btnAgregar = document.getElementById("btnAbrirModalTecnico") || document.querySelector("button[onclick*='modalTecnico']");
+    // 2. Ocultar o mostrar el botón "+ Agregar Técnico" por su ID exacto
+    const btnAgregar = document.getElementById("btnAbrirModalTecnico");
     if (btnAgregar) {
         btnAgregar.style.setProperty("display", esTecnico ? "none" : "inline-block", "important");
     }
 
-    // 3. Regla CSS global para forzar la ocultación en caso de renderizado tardío
+    // 3. Regla CSS de respaldo para asegurar que el botón permanezca oculto
     let styleBlock = document.getElementById("style-tecnico-exact");
     if (!styleBlock) {
         styleBlock = document.createElement("style");
@@ -106,8 +110,7 @@ function aplicarPermisosPorRol() {
     if (esTecnico) {
         styleBlock.innerHTML = `
             #btnAbrirModalTecnico,
-            button[onclick*='modalTecnico'],
-            button[onclick*='Modal'] { 
+            button[onclick*='modalTecnico'] { 
                 display: none !important; 
             }
         `;
@@ -214,64 +217,9 @@ window.ejecutarIngresoDirecto = function(e) {
     return false;
 };
 
-function aplicarPermisosPorRol() {
-    const rolActual = window.rolUsuarioActual || localStorage.getItem('user_role') || "Técnico";
-    const esTecnico = (rolActual === "Técnico");
-
-    // 1. Actualizar la etiqueta del header
-    const todosLosBadges = document.querySelectorAll("button, span, div, .badge");
-    todosLosBadges.forEach(el => {
-        if (el.textContent.trim() === "Supervisor" || el.textContent.trim() === "Técnico") {
-            if (el.classList.contains("badge") || el.tagName === "BUTTON" || el.id === "badgeRolUsuario") {
-                el.textContent = rolActual;
-                if (el.classList.contains("bg-success") || el.classList.contains("bg-primary")) {
-                    el.className = esTecnico ? "badge bg-primary me-2" : "badge bg-success me-2";
-                }
-            }
-        }
-    });
-
-    // 2. Bloqueo estricto por inyección de reglas CSS
-    let styleBlock = document.getElementById("role-permissions-style");
-    if (!styleBlock) {
-        styleBlock = document.createElement("style");
-        styleBlock.id = "role-permissions-style";
-        document.head.appendChild(styleBlock);
-    }
-
-    if (esTecnico) {
-        styleBlock.innerHTML = `
-            /* Ocultar botones de crear/editar/eliminar técnicos */
-            button[onclick*='modalTecnico'],
-            .card-tecnico-actions,
-            .btn-edit-tec,
-            .btn-delete-tec,
-            .fa-pencil,
-            .fa-trash,
-            .fa-user-pen { display: none !important; }
-
-            /* Ocultar formulario de Agendamiento para técnicos */
-            #formOrden,
-            .form-programar-orden,
-            button[onclick*='guardarOrden'],
-            button[type='submit'],
-            .btn-crear-orden { display: none !important; }
-
-            /* Ocultar columna de Acciones en la tabla de órdenes */
-            .tabla-ordenes th:last-child,
-            .tabla-ordenes td:last-child,
-            .btn-editar-orden,
-            .btn-eliminar-orden { display: none !important; }
-        `;
-    } else {
-        styleBlock.innerHTML = "";
-    }
-}
-
 // ==========================================
 // 1. INICIALIZACIÓN DEL MAPA LEAFLET
 // ==========================================
-
 window.inicializarMapa = function() {
     const mapDiv = document.getElementById('mapaLeaflet') || document.getElementById('map');
     if (!mapDiv) return;
