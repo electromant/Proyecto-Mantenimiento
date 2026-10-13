@@ -79,13 +79,12 @@ function aplicarPermisosPorRol() {
     const rolActual = window.rolUsuarioActual || localStorage.getItem('user_role') || "Técnico";
     const esTecnico = (rolActual === "Técnico");
 
-    // 1. Cambiar el texto del rol en el header (userRoleDisplay)
+    // 1. Cambiar la etiqueta del texto superior
     const roleDisplay = document.getElementById("userRoleDisplay");
     if (roleDisplay) {
         roleDisplay.textContent = rolActual;
     }
 
-    // Actualización de respaldo para cualquier botón del header que conserve "Supervisor"
     const elementosRol = document.querySelectorAll(".navbar button, header button, .navbar span, header span");
     elementosRol.forEach(el => {
         if (el.textContent.trim() === "Supervisor" || el.textContent.trim() === "Técnico") {
@@ -93,13 +92,7 @@ function aplicarPermisosPorRol() {
         }
     });
 
-    // 2. Ocultar o mostrar el botón "+ Agregar Técnico" por su ID exacto
-    const btnAgregar = document.getElementById("btnAbrirModalTecnico");
-    if (btnAgregar) {
-        btnAgregar.style.setProperty("display", esTecnico ? "none" : "inline-block", "important");
-    }
-
-    // 3. Regla CSS de respaldo para asegurar que el botón permanezca oculto
+    // 2. Inyección de reglas CSS globales estrictas para el rol Técnico
     let styleBlock = document.getElementById("style-tecnico-exact");
     if (!styleBlock) {
         styleBlock = document.createElement("style");
@@ -109,8 +102,33 @@ function aplicarPermisosPorRol() {
 
     if (esTecnico) {
         styleBlock.innerHTML = `
+            /* Ocultar botón + Agregar Técnico y edición/eliminación en tarjetas */
             #btnAbrirModalTecnico,
-            button[onclick*='modalTecnico'] { 
+            button[onclick*='modalTecnico'],
+            button[onclick*='Modal'],
+            .card-tecnico-actions,
+            .btn-edit-tec,
+            .btn-delete-tec,
+            .fa-pencil,
+            .fa-trash,
+            .fa-user-pen { 
+                display: none !important; 
+            }
+
+            /* Ocultar Formulario de Programar Orden de Mantenimiento */
+            .card-box.supervisor-only,
+            #formOrden,
+            .form-programar-orden,
+            button[type='submit']:has(.fa-paper-plane),
+            button[onclick*='guardarOrden'] { 
+                display: none !important; 
+            }
+
+            /* Ocultar columna de Acciones en la Tabla de Historial de Órdenes */
+            .tabla-ordenes th:last-child,
+            .tabla-ordenes td:last-child,
+            .btn-editar-orden,
+            .btn-eliminar-orden { 
                 display: none !important; 
             }
         `;
@@ -335,9 +353,6 @@ window.editarTecnico = function(id) {
     }
 };
 
-// ==========================================
-// 3. CAMBIO DE PESTAÑA Y ACTIVACIÓN VISTA
-// ==========================================
 window.cambiarPestana = window.cambiarTab = function(tabName, element) {
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -356,10 +371,15 @@ window.cambiarPestana = window.cambiarTab = function(tabName, element) {
     // Acciones específicas según la pestaña
     if (tabName === 'mapa') {
         setTimeout(() => {
-            inicializarMapa();
+            if (typeof inicializarMapa === 'function') inicializarMapa();
         }, 200);
     } else if (tabName === 'tecnicos' || tabName === 'directorio') {
-        renderizarTecnicos();
+        if (typeof renderizarTecnicos === 'function') renderizarTecnicos();
+    }
+
+    // REAPLICAR PERMISOS SIEMPRE AL NAVEGAR ENTRE PESTAÑAS
+    if (typeof aplicarPermisosPorRol === 'function') {
+        aplicarPermisosPorRol();
     }
 };
 
